@@ -1,8 +1,6 @@
 package com.subbu.trackit.restcontroller;
 
 import android.app.Application;
-import android.app.ProgressDialog;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -12,8 +10,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -90,7 +86,7 @@ public class AppController extends Application {
                     @Override
                     public void onResponse(JSONObject response) {
                         ResBean res = gson.fromJson(response.toString(), ResBean.class);
-                        Log.i("&&&&&&&&&&&&&&&&",radius+"--"+res.getTruckStops().size()+"---"+map.getCameraPosition().zoom);
+                        Log.i("&&&&&&&&&&&&&&&&", radius + "--" + res.getTruckStops().size() + "---" + map.getCameraPosition().zoom);
                         if(res.getTruckStops().size()>0) {
                             LatLngBounds.Builder builder = new LatLngBounds.Builder();
                             map.clear();
@@ -100,6 +96,7 @@ public class AppController extends Application {
                                 marker = new MarkerOptions().position(new LatLng(stop.getLat(), stop.getLng()));
                                 map.addMarker(marker);
                             }
+
 
                         }
                     }

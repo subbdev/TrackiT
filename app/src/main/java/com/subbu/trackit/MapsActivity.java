@@ -7,9 +7,9 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
@@ -22,10 +22,11 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.subbu.trackit.restcontroller.AppController;
 
+import static com.subbu.trackit.utils.Util.boundsWithCenterAndLatLngDistance;
 import static com.subbu.trackit.utils.Util.getCurrentRadius;
-import static com.subbu.trackit.utils.Util.radiusToZoom;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,LocationListener {
 
@@ -84,7 +85,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         Criteria criteria = new Criteria();
         String bestProvider = locationManager.getBestProvider(criteria, true);
-        Location location = locationManager.getLastKnownLocation(bestProvider);
+        final Location location = locationManager.getLastKnownLocation(bestProvider);
+        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+            @Override
+            public void onMapLoaded() {
+                double latitude = location.getLatitude();
+                double longitude = location.getLongitude();
+                LatLng latLng = new LatLng(latitude, longitude);
+                LatLngBounds bounds = boundsWithCenterAndLatLngDistance(latLng, 2 * 100 * 1609.34f, 2 * 100 * 1609.34f);
+                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0));
+            }
+        });
         mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
             @Override
             public void onCameraChange(CameraPosition cameraPosition) {
@@ -110,8 +121,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         double longitude = location.getLongitude();
         LatLng latLng = new LatLng(latitude, longitude);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(radiusToZoom(100)));
-        //AppController.getInstance().getStopPoints(latLng,latitude,longitude,100);
     }
 
     @Override
