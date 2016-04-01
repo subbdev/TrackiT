@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">TrackiT</string>
     <string name="title_activity_maps">Map</string>
+    <string name="track_me">Track me</string>
+    <string name="tracking">Tracking...</string>
+    <string name="satellite">Satellite</string>
+    <string name="map">Map</string>
+    <string name="current">Current</string>
+    <string name="database">Database</string>
+    <string name="Server">Server</string>
 </resources>

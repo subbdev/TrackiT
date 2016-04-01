@@ -22,23 +22,28 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:id="@+id/button_track_me" />
+            android:id="@+id/button_track_me"
+            android:text="@string/track_me" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/button_track_me"
-            android:layout_weight="1" />
+            android:id="@+id/button_satellite_map_view"
+            android:layout_weight="1"
+            android:text="@string/map" />
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/button_track_me"
-            android:layout_weight="1" />
+            android:id="@+id/button_current_location"
+            android:layout_weight="1"
+            android:text="@string/current" />
+
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/button_track_me"
-            android:layout_weight="1" />
+            android:id="@+id/button_db_server"
+            android:layout_weight="1"
+            android:text="@string/Server" />
     </LinearLayout>
 
 </FrameLayout>

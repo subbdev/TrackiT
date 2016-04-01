@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Marker;
+import com.subbu.trackit.beans.TruckStop;
 
 /**
  * Created by bhanuchander.belladi on 01-04-2016.
@@ -18,16 +19,18 @@ import com.google.android.gms.maps.model.Marker;
 public class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
 
     private final View mWindow;
+    private TruckStop mTruckStop;
 
 
-    public CustomInfoWindowAdapter(Activity context) {
+    public CustomInfoWindowAdapter(Activity context, TruckStop stop) {
         mWindow = context.getLayoutInflater().inflate(R.layout.custom_info_window, null);
+        mTruckStop = stop;
     }
 
     @Override
     public View getInfoWindow(Marker marker) {
 
-        render(marker, mWindow);
+        render(mTruckStop, mWindow);
         return mWindow;
     }
 
@@ -36,28 +39,15 @@ public class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
         return null;
     }
 
-    private void render(Marker marker, View view) {
+    private void render(TruckStop stop, View view) {
 
-        String title = marker.getTitle();
-        TextView titleUi = ((TextView) view.findViewById(R.id.title));
-        if (title != null) {
-            // Spannable string allows us to edit the formatting of the text.
-            SpannableString titleText = new SpannableString(title);
-            titleText.setSpan(new ForegroundColorSpan(Color.RED), 0, titleText.length(), 0);
-            titleUi.setText(titleText);
-        } else {
-            titleUi.setText("");
-        }
+        TextView nameTextView = (TextView) view.findViewById(R.id.textview_name);
+        TextView distanceTextView = (TextView) view.findViewById(R.id.textview_distance);
+        TextView addressTextView = (TextView) view.findViewById(R.id.textview_address);
 
-        String snippet = marker.getSnippet();
-        TextView snippetUi = ((TextView) view.findViewById(R.id.snippet));
-        if (snippet != null && snippet.length() > 12) {
-            SpannableString snippetText = new SpannableString(snippet);
-            snippetText.setSpan(new ForegroundColorSpan(Color.MAGENTA), 0, 10, 0);
-            snippetText.setSpan(new ForegroundColorSpan(Color.BLUE), 12, snippet.length(), 0);
-            snippetUi.setText(snippetText);
-        } else {
-            snippetUi.setText("");
-        }
+
+        nameTextView.setText(stop.getName());
+        addressTextView.setText(stop.getCity()+", "+stop.getState()+", "+stop.getCountry());
+
     }
 }
