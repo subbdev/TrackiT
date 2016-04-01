@@ -1,7 +1,10 @@
 package com.subbu.trackit.restcontroller;
 
+import android.app.Activity;
 import android.app.Application;
 import android.app.ProgressDialog;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -15,12 +18,17 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
+import com.subbu.trackit.CustomInfoWindowAdapter;
+import com.subbu.trackit.R;
 import com.subbu.trackit.beans.ResBean;
 import com.subbu.trackit.beans.TruckStop;
+import com.subbu.trackit.utils.Cache;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -75,7 +83,7 @@ public class AppController extends Application {
     }
 
 
-    public void getStopPoints(final LatLng latLng, double lat, double lng, final int radius) {
+    public void getStopPoints(final LatLng latLng, double lat, double lng, final int radius,final Activity activity) {
 
         try {
             requestBody.put("lat",lat);
@@ -97,8 +105,13 @@ public class AppController extends Application {
                             MarkerOptions marker = new MarkerOptions().position(latLng);
                             map.addMarker(marker);
                             for (TruckStop stop : res.getTruckStops()) {
-                                marker = new MarkerOptions().position(new LatLng(stop.getLat(), stop.getLng()));
+                                map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity));
+                                BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.truck_stop);
+                                marker = new MarkerOptions()
+                                        .icon(icon)
+                                        .position(new LatLng(stop.getLat(), stop.getLng()));
                                 map.addMarker(marker);
+                                Cache.getDatabaseAdapter().insertTruckStops(stop);
                             }
 
                         }

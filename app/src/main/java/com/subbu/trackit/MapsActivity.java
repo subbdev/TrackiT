@@ -7,9 +7,9 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
@@ -22,13 +22,16 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.subbu.trackit.database.DatabaseAdapter;
 import com.subbu.trackit.restcontroller.AppController;
+import com.subbu.trackit.utils.Cache;
 
 import static com.subbu.trackit.utils.Util.getCurrentRadius;
 import static com.subbu.trackit.utils.Util.radiusToZoom;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,LocationListener {
 
+    private static DatabaseAdapter databaseAdapter = null;
     private GoogleMap mMap;
     float dratio;
 
@@ -40,6 +43,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             finish();
         }
         setContentView(R.layout.activity_maps);
+
+        openDatabase();
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -90,7 +96,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onCameraChange(CameraPosition cameraPosition) {
                 int radius = getCurrentRadius(mMap,dratio);
                 Log.i("Distance--------------", radius + "");
-                AppController.getInstance().getStopPoints(cameraPosition.target, cameraPosition.target.latitude, cameraPosition.target.longitude, radius);
+                AppController.getInstance().getStopPoints(cameraPosition.target, cameraPosition.target.latitude, cameraPosition.target.longitude, radius, MapsActivity.this);
             }
         });
         if (location != null) {
@@ -138,4 +144,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return false;
         }
     }
+
+    /**
+     * Open sqlite data base connections.
+     */
+    private void openDatabase() {
+        if(Cache.getDatabaseAdapter() == null) {
+            Cache.setDatabaseAdapter(new DatabaseAdapter(getApplicationContext()));
+            Cache.getDatabaseAdapter().getDatabase();
+        }
+    }
+
+    /**
+     * Close sqlite data base connections.
+     */
+    private void closeDatabase() {
+        Cache.getDatabaseAdapter().close();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        closeDatabase();
+    }
+
+
 }
