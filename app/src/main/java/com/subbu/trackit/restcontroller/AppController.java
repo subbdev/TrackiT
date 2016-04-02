@@ -103,7 +103,7 @@ public class AppController extends Application {
                             MarkerOptions marker = new MarkerOptions().position(latLng);
                             map.addMarker(marker);
                             for (TruckStop stop : res.getTruckStops()) {
-                                map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity));
+                                map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
                                 BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.truck_stop);
                                 marker = new MarkerOptions()
                                         .icon(icon)
