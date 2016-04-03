@@ -2,6 +2,7 @@ package com.subbu.trackit;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -14,13 +15,10 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.animation.Animation;
-import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -49,11 +47,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
+    public static final String TRACK_ME_PREFERENCES = "TrackMe" ;
+    public static final String PREFERENCES_IS_SATELLITE_VIEW = "MapSatelliteView" ;
+    public static final String PREFERENCES_TRACKING = "Tracking" ;
     private static DatabaseAdapter databaseAdapter = null;
     private GoogleMap mMap;
     public static Timer mTimer;
     float dratio;
     GoogleApiClient mGoogleApiClient;
+
+    SharedPreferences sharedpreferences ;
+    boolean isSatelliteView;
 
     private Button mTrackMeButton, mSatelliteMapButton, mCurrentLocationButton, mDbServerButton,
             mCloseButton, mClearButton, mDoneButton, mSearchButton;
@@ -69,7 +73,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         setContentView(R.layout.activity_maps);
         openDatabase();
-
+        sharedpreferences = getSharedPreferences(TRACK_ME_PREFERENCES, Context.MODE_PRIVATE);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -103,6 +107,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mDoneButton.setOnClickListener(this);
 
         mSearchButton.setOnClickListener(this);
+        Util.isTracking = sharedpreferences.getBoolean(PREFERENCES_TRACKING, false);
+        isSatelliteView = sharedpreferences.getBoolean(PREFERENCES_IS_SATELLITE_VIEW, false);
+
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        // getting GPS status
+        boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+        // getting network status
+        boolean  isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+        if(!(isGPSEnabled && isNetworkEnabled)){
+            Util.showSettingsAlert(MapsActivity.this);
+        }
     }
 
 
@@ -119,6 +136,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+
+        if(isSatelliteView){
+            mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        }else{
+            mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        }
+
+        mMap.getUiSettings().setMyLocationButtonEnabled(false);
+
         DisplayMetrics displayMetrics = new DisplayMetrics();
         WindowManager windowmanager = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         windowmanager.getDefaultDisplay().getMetrics(displayMetrics);
@@ -170,6 +196,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         AppController.getInstance().getStopPoints(latLng, latitude, longitude, 50000, MapsActivity.this);
                     }
                     Util.fromDB = true;
+                }else{
+
                 }
             }
         });
@@ -288,13 +316,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 moveToCurrentLocation();
                 break;
             case R.id.button_satellite_map_view:
+                SharedPreferences.Editor editor = sharedpreferences.edit();
                 if (mSatelliteMapButton.getText().equals(getString(R.string.satellite))) {
                     mSatelliteMapButton.setText(getString(R.string.map));
                     mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+                    editor.putBoolean(PREFERENCES_IS_SATELLITE_VIEW, true);
                 } else {
                     mSatelliteMapButton.setText(getString(R.string.satellite));
                     mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                    editor.putBoolean(PREFERENCES_IS_SATELLITE_VIEW, false);
                 }
+                editor.commit();
 
                 break;
 
