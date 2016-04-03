@@ -3,7 +3,6 @@ package com.subbu.trackit;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -18,29 +17,33 @@ import android.widget.Button;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.subbu.trackit.database.DatabaseAdapter;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.subbu.trackit.database.DatabaseAdapter;
 import com.subbu.trackit.restcontroller.AppController;
 import com.subbu.trackit.utils.Cache;
 import com.subbu.trackit.utils.Timer;
+import com.subbu.trackit.utils.Util;
 
 import static com.subbu.trackit.utils.Util.boundsWithCenterAndLatLngDistance;
 import static com.subbu.trackit.utils.Util.getCurrentRadius;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         LocationListener,
-        View.OnClickListener {
+        View.OnClickListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private static DatabaseAdapter databaseAdapter = null;
     private GoogleMap mMap;
-    public static Timer mTimer ;
+    public static Timer mTimer;
     float dratio;
+    GoogleApiClient mGoogleApiClient;
 
     private Button mTrackMeButton, mSatelliteMapButton, mCurrentLocationButton, mDbServerButton;
 
@@ -52,8 +55,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             finish();
         }
         setContentView(R.layout.activity_maps);
-
         openDatabase();
+
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -84,10 +87,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
-
         mMap = googleMap;
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        WindowManager windowmanager = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+        windowmanager.getDefaultDisplay().getMetrics(displayMetrics);
+        float deviceWidth = displayMetrics.widthPixels;
+        float deviceHeight = displayMetrics.heightPixels;
+        Log.i("^^^^^^^^^^^^", displayMetrics.densityDpi + "");
+        double a = displayMetrics.densityDpi * 256.0 / 160;
+
+        double di = 256.0 * 0.0254 / displayMetrics.densityDpi;
+        Log.i("^^^^^^^^^^^^", di + "");
+        di = 100 * 1609.34 / di;
+        double z = (Math.log10(di) - Math.log10(a)) / Math.log10(2);
+        Log.i("^^^^^^^^^^^^", z + "");
+        dratio = deviceHeight > deviceWidth ? deviceHeight / deviceWidth : deviceWidth / deviceHeight;
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -97,28 +112,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        WindowManager windowmanager = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
-        windowmanager.getDefaultDisplay().getMetrics(displayMetrics);
-        float deviceWidth = displayMetrics.widthPixels;
-        float deviceHeight = displayMetrics.heightPixels;
-        dratio = deviceHeight > deviceWidth ? deviceHeight / deviceWidth : deviceWidth / deviceHeight;
-
         mMap.setMyLocationEnabled(true);
         AppController.getInstance().setMap(mMap);
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-        String bestProvider = locationManager.getBestProvider(criteria, true);
-        final Location location = locationManager.getLastKnownLocation(bestProvider);
+        Location test = null;
+        for (String provider : locationManager.getAllProviders()) {
+            test = locationManager.getLastKnownLocation(provider);
+            if (test != null)
+                break;
+        }
+        final Location location = test;
+        if (location == null) {
+            Log.i("&&&&&&&&&&&", "No Location");
+        }
+
         mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
             @Override
             public void onMapLoaded() {
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                LatLng latLng = new LatLng(latitude, longitude);
-                LatLngBounds bounds = boundsWithCenterAndLatLngDistance(latLng, 2 * 100 * 1609.34f, 2 * 100 * 1609.34f);
-                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0));
+                if (location != null) {
+                    double latitude = location.getLatitude();
+                    double longitude = location.getLongitude();
+                    LatLng latLng = new LatLng(latitude, longitude);
+                    LatLngBounds bounds = boundsWithCenterAndLatLngDistance(latLng, 2 * 100 * 1609.34f, 2 * 100 * 1609.34f);
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0));
+                    AppController.getInstance().getStopPoints(latLng, latitude, longitude, 50000, MapsActivity.this);
+                    Util.fromDB = true;
+                }
             }
         });
         mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
@@ -129,16 +148,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 AppController.getInstance().getStopPoints(cameraPosition.target, cameraPosition.target.latitude, cameraPosition.target.longitude, radius, MapsActivity.this);
             }
         });
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                marker.showInfoWindow();
+                return true;
+            }
+        });
         if (location != null) {
             onLocationChanged(location);
         }
-        locationManager.requestLocationUpdates(bestProvider, 20000, 0, this);
+
 
        /* // Add a marker in Sydney and move the camera
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
     }
+
 
     @Override
     public void onLocationChanged(Location location) {
@@ -202,11 +229,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         switch (v.getId()) {
             case R.id.button_track_me:
 
-                if(mTimer == null){
+                if (mTimer == null) {
                     mTimer = new Timer(MapsActivity.this);
                     mTimer.startTimer();
                     startTracking();
-                }else{
+                } else {
                     mTimer.stopTimer();
                     mTimer = null;
                     stopTracking();
@@ -235,47 +262,80 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-
-    private void startTracking(){
+    private void startTracking() {
         //TODO
     }
 
-    private void stopTracking(){
+    private void stopTracking() {
         //TODO
 
     }
 
 
     private void moveToCurrentLocation() {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        Location test = null;
+        for (String provider : locationManager.getAllProviders()) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            test = locationManager.getLastKnownLocation(provider);
+            if (test != null)
+                break;
         }
-        Location location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria, false));
-        if (location != null)
-        {
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                    new LatLng(location.getLatitude(), location.getLongitude()), 13));
 
-            CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .target(new LatLng(location.getLatitude(), location.getLongitude()))      // Sets the center of the map to location user
-                    .zoom(17)                   // Sets the zoom
-                    .bearing(90)                // Sets the orientation of the camera to east
-                    .tilt(40)                   // Sets the tilt of the camera to 30 degrees
-                    .build();                   // Creates a CameraPosition from the builder
-            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
+        final Location location = test;
+        if (location == null) {
+            Log.i("&&&&&&&&&&&", "No Location");
+        } else {
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            final float bearing = mMap.getCameraPosition().bearing;
+            LatLng latLng = new LatLng(latitude, longitude);
+            double val = (Math.log10(40075160) + Math.log10(160) + Math.log10(1080) - Math.log10(2 * 100 * 1609.34) - Math.log10(480) - Math.log10(256)) / Math.log10(2);
+            Log.i("Z^^^^^^^^^^^^", val + "");
+            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
+                    .target(latLng)
+                    .zoom((float) val)
+                    .bearing(bearing)
+                    .build()));
+            /*LatLngBounds bounds = boundsWithCenterAndLatLngDistance(latLng, 2 * 100 * 1609.34f, 2 * 100 * 1609.34f);
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0)*//*,DURATION_IN_MS_IF_NEEDED*//*,new GoogleMap.CancelableCallback(){
+                @Override
+                public void onCancel() {
+                    //DO SOMETHING HERE IF YOU WANT TO REACT TO A USER TOUCH WHILE ANIMATING
+                }
+                @Override
+                public void onFinish() {
+                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
+                            .target(mMap.getCameraPosition().target)
+                            .zoom(mMap.getCameraPosition().zoom)
+                            .bearing(bearing)
+                    .build()));
+                }
+            });*/
         }
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
 }

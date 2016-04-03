@@ -5,7 +5,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.Location;
+import android.util.Log;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.subbu.trackit.beans.TruckStop;
 
 import java.util.ArrayList;
@@ -130,6 +133,55 @@ public class DatabaseAdapter {
 
     }
 
+    /**
+     * Gets all data from Truck stop table.
+     */
+    public ArrayList<TruckStop> getTruckStopsByLocNRad(LatLng center, float radius) {
+
+        ArrayList<TruckStop> truckStops = new ArrayList<>();
+        String selection = null;
+        String selectionArgs[] = null;
+        String projection[] = new String[]{COLUMN_NAME,
+                COLUMN_CITY,
+                COLUMN_STATE,
+                COLUMN_COUNTRY,
+                COLUMN_ZIP,
+                COLUMN_LATITUDE,
+                COLUMN_LONGITUDE,
+                COLUMN_RAW_LINE1,
+                COLUMN_RAW_LINE2,
+                COLUMN_RAW_LINE3};
+
+        Cursor cursor = getDatabase().query(DATABASE_TABLE_TRUCK_STOP, projection, selection, selectionArgs, null, null, null);
+
+        if (cursor != null) {
+            if (cursor.getCount() > 0) {
+                while (cursor.moveToNext()) {
+
+                    TruckStop truckStop = new TruckStop();
+                    truckStop.setName(cursor.getString(0));
+                    truckStop.setCity(cursor.getString(1));
+                    truckStop.setState(cursor.getString(2));
+                    truckStop.setCountry(cursor.getString(3));
+                    truckStop.setZip(cursor.getString(4));
+                    truckStop.setLat(cursor.getDouble(5));
+                    truckStop.setLng(cursor.getDouble(6));
+                    truckStop.setRawLine1(cursor.getString(7));
+                    truckStop.setRawLine2(cursor.getString(8));
+                    truckStop.setRawLine3(cursor.getString(9));
+                    float[] test = new float[3];
+                    Location.distanceBetween(center.latitude, center.longitude, truckStop.getLat(), truckStop.getLng(), test);
+                    Log.i("RADIUS---", test[0] * 0.00062137 + "---" + radius);
+                    if (test[0] * 0.00062137 <= radius)
+                        truckStops.add(truckStop);
+                }
+            }
+            cursor.close();
+        }
+        return truckStops;
+
+
+    }
 }
 
 

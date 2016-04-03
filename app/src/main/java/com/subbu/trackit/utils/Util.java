@@ -1,9 +1,9 @@
 package com.subbu.trackit.utils;
 
 import android.location.Location;
-import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 
@@ -11,19 +11,23 @@ import com.google.android.gms.maps.model.LatLngBounds;
  * Created by Subrahmanyam.yepuri on 01-04-2016.
  */
 public class Util {
+    public static int currentCall = 0;
+    public static BitmapDescriptor marker_icon;
+    public static boolean fromDB = false;
     public static long radiusToZoom(float radius) {
         double scale = radius * 1609.34 / 540;
         return Math.round(16 - Math.log(scale) / Math.log(2));
     }
     public static int getCurrentRadius(GoogleMap mMap, float dratio)
     {
-        LatLngBounds llBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
+       /* LatLngBounds llBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
         float[] test = new float[3];
         Location.distanceBetween(llBounds.northeast.latitude, llBounds.northeast.longitude, llBounds.southwest.latitude, llBounds.southwest.longitude, test);
         Log.i("DISTinti********", test[0] + "");
-        int radius = (int) (((test[0] / Math.sqrt(1 + dratio)) * 0.00062137) / 2);
+        int radius = (int) (((test[0] / Math.sqrt(1 + dratio)) * 0.00062137) / 2);*/
+        double radius = (40075160 * 160.0 * 1080) * 0.000621371 / (Math.pow(2, mMap.getCameraPosition().zoom + 1) * 480.0 * 256);
 
-        return radius;
+        return (int) radius;
     }
 
     private static final double ASSUMED_INIT_LATLNG_DIFF = 1.0;

@@ -2,10 +2,8 @@ package com.subbu.trackit.restcontroller;
 
 import android.app.Activity;
 import android.app.Application;
-import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -16,21 +14,20 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
 import com.subbu.trackit.CustomInfoWindowAdapter;
-import com.subbu.trackit.R;
 import com.subbu.trackit.beans.ResBean;
 import com.subbu.trackit.beans.TruckStop;
 import com.subbu.trackit.utils.Cache;
+import com.subbu.trackit.utils.Util;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,6 +77,11 @@ public class AppController extends Application {
         }
     }
 
+    public Bitmap resizeMapIcons(String iconName, int width, int height) {
+        Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), getResources().getIdentifier(iconName, "drawable", getPackageName()));
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+        return resizedBitmap;
+    }
 
     public void getStopPoints(final LatLng latLng, double lat, double lng, final int radius,final Activity activity) {
 
@@ -89,51 +91,78 @@ public class AppController extends Application {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
-                BASE_URL+radius, requestBody,
-                new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        ResBean res = gson.fromJson(response.toString(), ResBean.class);
-                        Log.i("&&&&&&&&&&&&&&&&", radius + "--" + res.getTruckStops().size() + "---" + map.getCameraPosition().zoom);
-                        if(res.getTruckStops().size()>0) {
-                            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                            map.clear();
-                            MarkerOptions marker = new MarkerOptions().position(latLng);
-                            map.addMarker(marker);
-                            for (TruckStop stop : res.getTruckStops()) {
-                                map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
-                                BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.truck_stop);
-                                marker = new MarkerOptions()
-                                        .icon(icon)
-                                        .position(new LatLng(stop.getLat(), stop.getLng()));
-                                map.addMarker(marker);
-                                Cache.getDatabaseAdapter().insertTruckStops(stop);
-                            }
-
-
+        final int curval = ++Util.currentCall;
+        Log.i("@@@@@@@@", curval + "----" + Util.currentCall);
+        if (Util.fromDB) {
+            ArrayList<TruckStop> lst = Cache.getDatabaseAdapter().getTruckStopsByLocNRad(latLng, radius);
+            map.clear();
+            if (lst.size() > 0) {
+                MarkerOptions marker = new MarkerOptions().position(latLng);
+                map.addMarker(marker);
+                if (Util.marker_icon == null)
+                    Util.marker_icon = BitmapDescriptorFactory.fromBitmap(resizeMapIcons("truck_stop", 40, 60));
+                for (TruckStop stop : lst) {
+                    map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
+                    marker = new MarkerOptions()
+                            .icon(Util.marker_icon)
+                            .position(new LatLng(stop.getLat(), stop.getLng()));
+                    map.addMarker(marker);
+                }
+            }
+        } else {
+            JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
+                    BASE_URL + radius, requestBody,
+                    new Response.Listener<JSONObject>() {
+                        public Bitmap resizeMapIcons(String iconName, int width, int height) {
+                            Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), getResources().getIdentifier(iconName, "drawable", getPackageName()));
+                            Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+                            return resizedBitmap;
                         }
-                    }
-                }, new Response.ErrorListener() {
 
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("ERROR", new String(error.networkResponse.data));
-            }
-        }) {
-            /**
-             * Passing some request headers
-             * */
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> headers = new HashMap<String, String>();
-                headers.put("Authorization", BASE_AUTH);
-                return headers;
-            }
-        };
-        this.cancelPendingRequests(REQ_TAG);
-        this.addToRequestQueue(jsonObjReq, REQ_TAG);
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            Log.i("start #######", curval + "----" + Util.currentCall);
+                            if (curval == Util.currentCall || radius == 50000) {
+                                ResBean res = gson.fromJson(response.toString(), ResBean.class);
+                                Log.i("&&&&&&&&&&&&&&&&", radius + "--" + res.getTruckStops().size() + "---" + map.getCameraPosition().zoom);
+                                map.clear();
+                                if (res.getTruckStops().size() > 0) {
+                                    MarkerOptions marker = new MarkerOptions().position(latLng);
+                                    map.addMarker(marker);
+                                    if (Util.marker_icon == null)
+                                        Util.marker_icon = BitmapDescriptorFactory.fromBitmap(resizeMapIcons("truck_stop", 40, 60));
+                                    for (TruckStop stop : res.getTruckStops()) {
+                                        map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
+                                        marker = new MarkerOptions()
+                                                .icon(Util.marker_icon)
+                                                .position(new LatLng(stop.getLat(), stop.getLng()));
+                                        map.addMarker(marker);
+                                        Cache.getDatabaseAdapter().insertTruckStops(stop);
+                                    }
+                                }
+                            }
+                            Log.i("end #######", curval + "----" + Util.currentCall);
+                        }
+                    }, new Response.ErrorListener() {
+
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d("ERROR", new String(error.networkResponse.data));
+                }
+            }) {
+                /**
+                 * Passing some request headers
+                 */
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<String, String>();
+                    headers.put("Authorization", BASE_AUTH);
+                    return headers;
+                }
+            };
+            this.cancelPendingRequests(REQ_TAG);
+            this.addToRequestQueue(jsonObjReq, REQ_TAG);
+        }
     }
 
     public void setMap(GoogleMap map) {
