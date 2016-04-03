@@ -1,5 +1,9 @@
 package com.subbu.trackit.utils;
 
+import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -14,6 +18,7 @@ public class Util {
     public static int currentCall = 0;
     public static BitmapDescriptor marker_icon;
     public static boolean fromDB = false;
+    public static boolean isManualMove = false;
     public static long radiusToZoom(float radius) {
         double scale = radius * 1609.34 / 540;
         return Math.round(16 - Math.log(scale) / Math.log(2));
@@ -115,5 +120,10 @@ public class Util {
         return builder.build();
     }
 
+    public static Bitmap resizeMapIcons(Activity activity, int iconName, int width, int height) {
+        Bitmap imageBitmap = BitmapFactory.decodeResource(activity.getResources(), iconName);
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+        return resizedBitmap;
+    }
 
 }

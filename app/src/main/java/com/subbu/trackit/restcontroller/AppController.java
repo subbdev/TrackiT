@@ -1,9 +1,16 @@
 package com.subbu.trackit.restcontroller;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Application;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Location;
+import android.location.LocationManager;
+import android.support.v4.app.ActivityCompat;
+import android.text.Html;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -13,12 +20,15 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
 import com.subbu.trackit.CustomInfoWindowAdapter;
+import com.subbu.trackit.R;
 import com.subbu.trackit.beans.ResBean;
 import com.subbu.trackit.beans.TruckStop;
 import com.subbu.trackit.utils.Cache;
@@ -77,11 +87,7 @@ public class AppController extends Application {
         }
     }
 
-    public Bitmap resizeMapIcons(String iconName, int width, int height) {
-        Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), getResources().getIdentifier(iconName, "drawable", getPackageName()));
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
-        return resizedBitmap;
-    }
+
 
     public void getStopPoints(final LatLng latLng, double lat, double lng, final int radius,final Activity activity) {
 
@@ -97,15 +103,38 @@ public class AppController extends Application {
             ArrayList<TruckStop> lst = Cache.getDatabaseAdapter().getTruckStopsByLocNRad(latLng, radius);
             map.clear();
             if (lst.size() > 0) {
-                MarkerOptions marker = new MarkerOptions().position(latLng);
+                MarkerOptions marker = new MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.current_location, 100, 100))).position(latLng);
                 map.addMarker(marker);
                 if (Util.marker_icon == null)
-                    Util.marker_icon = BitmapDescriptorFactory.fromBitmap(resizeMapIcons("truck_stop", 40, 60));
+                    Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop, 100, 100));
                 for (TruckStop stop : lst) {
                     map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
                     marker = new MarkerOptions()
                             .icon(Util.marker_icon)
                             .position(new LatLng(stop.getLat(), stop.getLng()));
+                    marker.title(stop.getName());
+
+                    float[] distance = new float[1];
+                    Location.distanceBetween(latLng.latitude, latLng.longitude, stop.getLat(), stop.getLng(), distance);
+
+                    StringBuilder snippet = new StringBuilder();
+                    snippet.append("<html><body> Distance : " + distance[0]* 0.000621371 +" miles" +
+                            "<br/>City : " + stop.getCity() +
+                            "<br/>State : " + stop.getState() +
+                            "<br/>Country : " + stop.getCountry() +
+                            "<br/> Zip : " + stop.getZip());
+                    if(!TextUtils.isEmpty(stop.getRawLine1())){
+                        snippet.append("<br/> RawLine1 : " + stop.getRawLine1());
+                    }
+                    if(!TextUtils.isEmpty(stop.getRawLine2())){
+                        snippet.append("<br/> RawLine2 : " + stop.getRawLine2());
+                    }
+                    if(!TextUtils.isEmpty(stop.getRawLine3())){
+                        snippet.append("<br/> RawLine3 : " + stop.getRawLine3());
+                    }
+                    snippet.append("</body></html>");
+                    marker.snippet(snippet.toString());
+
                     map.addMarker(marker);
                 }
             }
@@ -130,12 +159,36 @@ public class AppController extends Application {
                                     MarkerOptions marker = new MarkerOptions().position(latLng);
                                     map.addMarker(marker);
                                     if (Util.marker_icon == null)
-                                        Util.marker_icon = BitmapDescriptorFactory.fromBitmap(resizeMapIcons("truck_stop", 40, 60));
+                                        Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop, 100, 100));
                                     for (TruckStop stop : res.getTruckStops()) {
                                         map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
+
                                         marker = new MarkerOptions()
                                                 .icon(Util.marker_icon)
                                                 .position(new LatLng(stop.getLat(), stop.getLng()));
+                                        marker.title(stop.getName());
+
+                                        float[] distance = new float[1];
+                                        Location.distanceBetween(latLng.latitude, latLng.longitude, stop.getLat(), stop.getLng(), distance);
+
+                                        StringBuilder snippet = new StringBuilder();
+                                        snippet.append("<html><body> Distance : " + distance[0]* 0.000621371 +" miles" +
+                                                "<br/>City : " + stop.getCity() +
+                                                "<br/>State : " + stop.getState() +
+                                                "<br/>Country : " + stop.getCountry() +
+                                                "<br/> Zip : " + stop.getZip());
+                                        if(!TextUtils.isEmpty(stop.getRawLine1())){
+                                            snippet.append("<br/> RawLine1 : " + stop.getRawLine1());
+                                        }
+                                        if(!TextUtils.isEmpty(stop.getRawLine2())){
+                                            snippet.append("<br/> RawLine2 : " + stop.getRawLine2());
+                                        }
+                                        if(!TextUtils.isEmpty(stop.getRawLine3())){
+                                            snippet.append("<br/> RawLine3 : " + stop.getRawLine3());
+                                        }
+                                        snippet.append("</body></html>");
+                                        marker.snippet(snippet.toString());
+
                                         map.addMarker(marker);
                                         Cache.getDatabaseAdapter().insertTruckStops(stop);
                                     }
@@ -143,6 +196,8 @@ public class AppController extends Application {
                             }
                             Log.i("end #######", curval + "----" + Util.currentCall);
                         }
+
+
                     }, new Response.ErrorListener() {
 
                 @Override
@@ -167,5 +222,74 @@ public class AppController extends Application {
 
     public void setMap(GoogleMap map) {
         this.map = map;
+    }
+
+    public void loadMapOnSearch(ArrayList<TruckStop> truckStops, Activity activity) {
+
+        map.clear();
+        if (truckStops.size() > 0) {
+
+            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            Location location = null;
+            for (String provider : locationManager.getAllProviders()) {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+                location = locationManager.getLastKnownLocation(provider);
+                if (location != null)
+                    break;
+            }
+
+
+            if (Util.marker_icon == null)
+                Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop, 100, 100));
+                        LatLngBounds.Builder builder = LatLngBounds.builder();
+            for (TruckStop stop : truckStops) {
+                LatLng point = new LatLng(stop.getLat(), stop.getLng());
+                map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
+                MarkerOptions marker = new MarkerOptions()
+                        .icon(Util.marker_icon)
+                        .position(point);
+                builder.include(point);
+
+                marker.title(stop.getName());
+
+               float distance = 0;
+
+                if(location != null) {
+                    float[] distanceArray = new float[1];
+                    Location.distanceBetween(location.getLatitude(), location.getLongitude(), stop.getLat(), stop.getLng(), distanceArray);
+                    distance = distanceArray[0];
+                }
+
+                StringBuilder snippet = new StringBuilder();
+                snippet.append("<html><body> Distance : " + distance * 0.000621371 +" miles" +
+                        "<br/>City : " + stop.getCity() +
+                        "<br/>State : " + stop.getState() +
+                        "<br/>Country : " + stop.getCountry() +
+                        "<br/> Zip : " + stop.getZip());
+                if(!TextUtils.isEmpty(stop.getRawLine1())){
+                    snippet.append("<br/> RawLine1 : " + stop.getRawLine1());
+                }
+                if(!TextUtils.isEmpty(stop.getRawLine2())){
+                    snippet.append("<br/> RawLine2 : " + stop.getRawLine2());
+                }
+                if(!TextUtils.isEmpty(stop.getRawLine3())){
+                    snippet.append("<br/> RawLine3 : " + stop.getRawLine3());
+                }
+                snippet.append("</body></html>");
+                marker.snippet(snippet.toString());
+                map.addMarker(marker);
+            }
+            Util.isManualMove = false;
+            map.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 0));
+        }
     }
 }

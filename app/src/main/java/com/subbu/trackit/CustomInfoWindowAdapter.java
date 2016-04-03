@@ -1,6 +1,8 @@
 package com.subbu.trackit;
 
 import android.app.Activity;
+import android.text.Html;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
 
@@ -25,7 +27,8 @@ public class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
     @Override
     public View getInfoWindow(Marker marker) {
 
-        render(mTruckStop, mWindow);
+
+        render(marker, mWindow);
         return mWindow;
     }
 
@@ -34,13 +37,15 @@ public class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
         return null;
     }
 
-    private void render(TruckStop stop, View view) {
+    private void render(Marker marker, View view) {
 
         TextView nameTextView = (TextView) view.findViewById(R.id.textview_name);
-        TextView distanceTextView = (TextView) view.findViewById(R.id.textview_distance);
+//        TextView distanceTextView = (TextView) view.findViewById(R.id.textview_distance);
         TextView addressTextView = (TextView) view.findViewById(R.id.textview_address);
-        nameTextView.setText(stop.getName());
-        addressTextView.setText(stop.getCity()+", "+stop.getState()+", "+stop.getCountry());
+
+        nameTextView.setText(marker.getTitle());
+        addressTextView.setText(TextUtils.isEmpty(marker.getSnippet()) ? "" : Html.fromHtml(marker.getSnippet()));
+//        addressTextView.setText(stop.getCity()+", "+stop.getState()+", "+stop.getCountry());
 
     }
 }

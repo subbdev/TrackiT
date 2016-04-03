@@ -7,5 +7,15 @@
     <string name="map">Map</string>
     <string name="current">Current</string>
     <string name="database">Database</string>
-    <string name="Server">Server</string>
+    <string name="server">Server</string>
+    <string name="search">Search</string>
+
+    <string name="close">Close</string>
+    <string name="clear">Clear</string>
+    <string name="done">Done</string>
+
+    <string name="name">Name</string>
+    <string name="city">City</string>
+    <string name="state">State</string>
+    <string name="zip">Zip</string>
 </resources>

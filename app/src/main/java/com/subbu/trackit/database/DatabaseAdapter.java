@@ -3,6 +3,7 @@ package com.subbu.trackit.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
@@ -180,6 +181,77 @@ public class DatabaseAdapter {
         }
         return truckStops;
 
+    }
+
+    public boolean isTruckStopsEmpty(){
+        long count = DatabaseUtils.queryNumEntries(getDatabase(), DATABASE_TABLE_TRUCK_STOP);
+        return count == 0 ? true : false;
+    }
+
+    /**
+     * Gets list of truck stops based on name, city, state, and/or zip.
+     * @return
+     */
+    public  ArrayList<TruckStop> getSearchTruckStops(String name,String city,String state,String zip){
+
+        ArrayList<TruckStop> truckStops = new ArrayList<>();
+        String selection = "lower(" + COLUMN_NAME + ") like ? ";
+        ArrayList<String> selectionArgs = new ArrayList<>();
+        int i = 0;
+
+        String searchString = "%" + name.toLowerCase() + "%";
+        selectionArgs.add(searchString);
+
+        if(city.length() > 0){
+            selection += "AND lower(" + COLUMN_CITY + ") =?";
+            selectionArgs.add(city.toLowerCase()) ;
+        }
+
+        if(state.length() > 0){
+            selection += "AND lower(" + COLUMN_STATE + ") =?";
+            selectionArgs.add(state.toLowerCase());
+        }
+
+        if(zip.length() > 0){
+            selection += "AND lower(" + COLUMN_ZIP + ") =?";
+            selectionArgs.add(zip.toLowerCase());
+        }
+
+        String projection[] = new String[]{COLUMN_NAME,
+                COLUMN_CITY,
+                COLUMN_STATE,
+                COLUMN_COUNTRY,
+                COLUMN_ZIP,
+                COLUMN_LATITUDE,
+                COLUMN_LONGITUDE,
+                COLUMN_RAW_LINE1,
+                COLUMN_RAW_LINE2,
+                COLUMN_RAW_LINE3};
+
+        Cursor cursor = getDatabase().query(DATABASE_TABLE_TRUCK_STOP, projection, selection, selectionArgs.toArray(new String[selectionArgs.size()]), null, null, null);
+
+
+        if (cursor != null) {
+            if (cursor.getCount() > 0) {
+                while (cursor.moveToNext()) {
+
+                    TruckStop truckStop = new TruckStop();
+                    truckStop.setName(cursor.getString(0));
+                    truckStop.setCity(cursor.getString(1));
+                    truckStop.setState(cursor.getString(2));
+                    truckStop.setCountry(cursor.getString(3));
+                    truckStop.setZip(cursor.getString(4));
+                    truckStop.setLat(cursor.getDouble(5));
+                    truckStop.setLng(cursor.getDouble(6));
+                    truckStop.setRawLine1(cursor.getString(7));
+                    truckStop.setRawLine2(cursor.getString(8));
+                    truckStop.setRawLine3(cursor.getString(9));
+                    truckStops.add(truckStop);
+                }
+            }
+            cursor.close();
+        }
+        return truckStops;
 
     }
 }
