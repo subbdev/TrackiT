@@ -1,4 +1,4 @@
-package com.subbu.trackit;
+package com.ggk.trackit;
 
 import android.app.Activity;
 import android.text.Html;
@@ -6,9 +6,9 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
 
+import com.ggk.trackit.beans.TruckStop;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Marker;
-import com.subbu.trackit.beans.TruckStop;
 
 /**
  * Created by bhanuchander.belladi on 01-04-2016.

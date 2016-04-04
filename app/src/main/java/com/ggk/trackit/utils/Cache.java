@@ -1,6 +1,6 @@
-package com.subbu.trackit.utils;
+package com.ggk.trackit.utils;
 
-import com.subbu.trackit.database.DatabaseAdapter;
+import com.ggk.trackit.database.DatabaseAdapter;
 
 /**
  * Created by bhanuchander.belladi on 01-04-2016.

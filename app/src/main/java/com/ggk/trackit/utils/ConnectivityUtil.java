@@ -1,4 +1,4 @@
-package com.subbu.trackit.utils;
+package com.ggk.trackit.utils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -8,7 +8,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-import com.subbu.trackit.R;
+import com.ggk.trackit.R;
 
 /**
  * Created by Subrahmanyam.yepuri on 04-04-2016.

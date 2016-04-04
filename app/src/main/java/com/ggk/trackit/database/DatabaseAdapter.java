@@ -1,4 +1,4 @@
-package com.subbu.trackit.database;
+package com.ggk.trackit.database;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -8,8 +8,8 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 
+import com.ggk.trackit.beans.TruckStop;
 import com.google.android.gms.maps.model.LatLng;
-import com.subbu.trackit.beans.TruckStop;
 
 import java.util.ArrayList;
 
@@ -182,16 +182,17 @@ public class DatabaseAdapter {
 
     }
 
-    public boolean isTruckStopsEmpty(){
+    public boolean isTruckStopsEmpty() {
         long count = DatabaseUtils.queryNumEntries(getDatabase(), DATABASE_TABLE_TRUCK_STOP);
         return count == 0 ? true : false;
     }
 
     /**
      * Gets list of truck stops based on name, city, state, and/or zip.
+     *
      * @return
      */
-    public  ArrayList<TruckStop> getSearchTruckStops(String name,String city,String state,String zip){
+    public ArrayList<TruckStop> getSearchTruckStops(String name, String city, String state, String zip) {
 
         ArrayList<TruckStop> truckStops = new ArrayList<>();
         String selection = "lower(" + COLUMN_NAME + ") like ? ";
@@ -201,17 +202,17 @@ public class DatabaseAdapter {
         String searchString = "%" + name.toLowerCase() + "%";
         selectionArgs.add(searchString);
 
-        if(city.length() > 0){
+        if (city.length() > 0) {
             selection += "AND lower(" + COLUMN_CITY + ") =?";
-            selectionArgs.add(city.toLowerCase()) ;
+            selectionArgs.add(city.toLowerCase());
         }
 
-        if(state.length() > 0){
+        if (state.length() > 0) {
             selection += "AND lower(" + COLUMN_STATE + ") =?";
             selectionArgs.add(state.toLowerCase());
         }
 
-        if(zip.length() > 0){
+        if (zip.length() > 0) {
             selection += "AND lower(" + COLUMN_ZIP + ") =?";
             selectionArgs.add(zip.toLowerCase());
         }

@@ -1,11 +1,11 @@
-package com.subbu.trackit.database;
+package com.ggk.trackit.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 
-public class DatabaseHelper  extends SQLiteOpenHelper {
+public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String TAG = "DatabaseHelper";
 
@@ -17,7 +17,7 @@ public class DatabaseHelper  extends SQLiteOpenHelper {
     private static final String DATABASE_CREATE_TABLE_TRUCK_STOP = "create table if not exists "
             + DatabaseAdapter.DATABASE_TABLE_TRUCK_STOP
             + " ("
-            + DatabaseAdapter.COLUMN_NAME+" text , "
+            + DatabaseAdapter.COLUMN_NAME + " text , "
             + DatabaseAdapter.COLUMN_CITY + " text , "
             + DatabaseAdapter.COLUMN_STATE + " text , "
             + DatabaseAdapter.COLUMN_COUNTRY + " text , "
@@ -27,8 +27,6 @@ public class DatabaseHelper  extends SQLiteOpenHelper {
             + DatabaseAdapter.COLUMN_RAW_LINE1 + " text , "
             + DatabaseAdapter.COLUMN_RAW_LINE2 + " text , "
             + DatabaseAdapter.COLUMN_RAW_LINE3 + " text);";
-
-
 
 
     public DatabaseHelper(Context context) {
