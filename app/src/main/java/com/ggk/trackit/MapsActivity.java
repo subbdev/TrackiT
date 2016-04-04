@@ -14,7 +14,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.Animation;
@@ -73,20 +72,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Marker mLastSelectedMarker;
     private int dpi;
     private int deviceWidth;
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case PERMISSION_REQUEST_CODE:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.v("TAG", "Success");
-                } else {
-                    Log.v("TAG", "Failed");
-                }
-                break;
-        }
-    }
 
 
     @Override
@@ -209,7 +194,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         WindowManager windowmanager = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         windowmanager.getDefaultDisplay().getMetrics(displayMetrics);
         deviceWidth = displayMetrics.widthPixels;
-        float deviceHeight = displayMetrics.heightPixels;
+
         dpi = displayMetrics.densityDpi;
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -228,9 +213,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 break;
         }
         final Location location = test;
-        if (location == null) {
-            Log.i("&&&&&&&&&&&", "No Location");
-        }
 
         mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
             @Override
@@ -257,7 +239,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mLastSelectedMarker = null;
                 if (Util.isManualMove) {
                     int radius = getCurrentRadius(mMap, deviceWidth, dpi);
-                    Log.i("Distance--------------", radius + "");
+
                     AppController.getInstance().getStopPoints(null, cameraPosition.target.latitude, cameraPosition.target.longitude, radius, MapsActivity.this);
                 } else {
                     Util.isManualMove = true;
@@ -283,11 +265,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             onLocationChanged(location);
         }
 
-
-       /* // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
     }
 
     @Override
@@ -385,69 +362,70 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
             case R.id.button_close:
-//                mSearchLayout.setVisibility(View.GONE);
+
                 hideView(mSearchLayout);
                 mSearchButton.setVisibility(View.VISIBLE);
+
                 break;
 
             case R.id.button_search:
 
-//                mSearchLayout.setVisibility(View.VISIBLE);
                 visibleView(mSearchLayout);
-//                hideView(mSearchButton);
                 mSearchButton.setVisibility(View.GONE);
-                /*if (mSearchLayout.getVisibility() == View.VISIBLE) {
-                    mSearchLayout.setVisibility(View.GONE);
-                } else {
-
-                }*/
                 break;
 
             case R.id.button_clear:
 
-                mNameEditText.setText("");
-                mCityEditText.setText("");
-                mStateEditText.setText("");
-                mZipEditText.setText("");
-                mNameEditText.requestFocus();
-                mSearchButton.setText(getString(R.string.search));
+                clearSearchFields();
 
                 break;
 
             case R.id.button_done:
-                String name = TextUtils.isEmpty(mNameEditText.getText()) ? "" : mNameEditText.getText().toString().trim();
-                String city = TextUtils.isEmpty(mCityEditText.getText()) ? "" : mCityEditText.getText().toString().trim();
-                String state = TextUtils.isEmpty(mStateEditText.getText()) ? "" : mStateEditText.getText().toString().trim();
-                String zip = TextUtils.isEmpty(mZipEditText.getText()) ? "" : mZipEditText.getText().toString().trim();
-
-//                mSearchLayout.setVisibility(View.GONE);
-                StringBuilder searchText = new StringBuilder();
-                if (name.length() > 0) {
-                    searchText.append(name + ",");
-                }
-                if (city.length() > 0) {
-                    searchText.append(city + ",");
-                }
-                if (state.length() > 0) {
-                    searchText.append(state + ",");
-                }
-                if (zip.length() > 0) {
-                    searchText.append(zip + ",");
-                }
-
-                mSearchButton.setText(TextUtils.isEmpty(searchText) ? getString(R.string.search) : searchText.deleteCharAt(searchText.length() - 1));
-
-                hideView(mSearchLayout);
-                mSearchButton.setVisibility(View.VISIBLE);
-
-
-                InputMethodManager imm = (InputMethodManager) getApplicationContext().getSystemService(INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(mDoneButton.getWindowToken(), 0);
-
-                AppController.getInstance().loadMapOnSearch(Cache.getDatabaseAdapter().getSearchTruckStops(name, city, state, zip), MapsActivity.this);
+                searchDone();
 
                 break;
         }
+    }
+
+    private void searchDone() {
+        String name = TextUtils.isEmpty(mNameEditText.getText()) ? "" : mNameEditText.getText().toString().trim();
+        String city = TextUtils.isEmpty(mCityEditText.getText()) ? "" : mCityEditText.getText().toString().trim();
+        String state = TextUtils.isEmpty(mStateEditText.getText()) ? "" : mStateEditText.getText().toString().trim();
+        String zip = TextUtils.isEmpty(mZipEditText.getText()) ? "" : mZipEditText.getText().toString().trim();
+
+        StringBuilder searchText = new StringBuilder();
+        if (name.length() > 0) {
+            searchText.append(name + ",");
+        }
+        if (city.length() > 0) {
+            searchText.append(city + ",");
+        }
+        if (state.length() > 0) {
+            searchText.append(state + ",");
+        }
+        if (zip.length() > 0) {
+            searchText.append(zip + ",");
+        }
+
+        mSearchButton.setText(TextUtils.isEmpty(searchText) ? getString(R.string.search) : searchText.deleteCharAt(searchText.length() - 1));
+
+        hideView(mSearchLayout);
+        mSearchButton.setVisibility(View.VISIBLE);
+
+
+        InputMethodManager imm = (InputMethodManager) getApplicationContext().getSystemService(INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(mDoneButton.getWindowToken(), 0);
+
+        AppController.getInstance().loadMapOnSearch(Cache.getDatabaseAdapter().getSearchTruckStops(name, city, state, zip), MapsActivity.this);
+    }
+
+    private void clearSearchFields() {
+        mNameEditText.setText("");
+        mCityEditText.setText("");
+        mStateEditText.setText("");
+        mZipEditText.setText("");
+        mNameEditText.requestFocus();
+        mSearchButton.setText(getString(R.string.search));
     }
 
     private void updateTrackMeStatus() {
@@ -541,15 +519,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         final Location location = test;
-        if (location == null) {
-            Log.i("&&&&&&&&&&&", "No Location");
-        } else {
+        if (location != null) {
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
             final float bearing = mMap.getCameraPosition().bearing;
             LatLng latLng = new LatLng(latitude, longitude);
             double val = (Math.log10(40075160) + Math.log10(160) + Math.log10(deviceWidth) - Math.log10(2 * 100 * 1609.34) - Math.log10(dpi) - Math.log10(256)) / Math.log10(2);
-            Log.i("Z^^^^^^^^^^^^", val + "");
+
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
                     .target(latLng)
                     .zoom((float) val)
@@ -562,7 +538,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .fillColor(0x1500ff00));
 
             int radius = getCurrentRadius(mMap, deviceWidth, dpi);
-            Log.i("Distance--------------", radius + "");
+
             AppController.getInstance().getStopPoints(latLng, latitude, longitude, radius, MapsActivity.this);
             isManualMove = false;
 

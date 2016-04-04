@@ -10,9 +10,7 @@ import android.net.NetworkInfo;
 
 import com.ggk.trackit.R;
 
-/**
- * Created by Subrahmanyam.yepuri on 04-04-2016.
- */
+
 public class ConnectivityUtil {
     public static void check(final Activity activity) {
         if (isConnectingToInternet(activity)) {
