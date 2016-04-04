@@ -9,7 +9,6 @@ import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
-import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -103,10 +102,10 @@ public class AppController extends Application {
             ArrayList<TruckStop> lst = Cache.getDatabaseAdapter().getTruckStopsByLocNRad(latLng, radius);
             map.clear();
             if (lst.size() > 0) {
-                MarkerOptions marker = new MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.current_location, 100, 100))).position(latLng);
+                MarkerOptions marker = new MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.current_location_pin, 100, 100))).position(latLng);
                 map.addMarker(marker);
                 if (Util.marker_icon == null)
-                    Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop, 100, 100));
+                    Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop_pin, 100, 100));
                 for (TruckStop stop : lst) {
                     map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
                     marker = new MarkerOptions()
@@ -159,7 +158,7 @@ public class AppController extends Application {
                                     MarkerOptions marker = new MarkerOptions().position(latLng);
                                     map.addMarker(marker);
                                     if (Util.marker_icon == null)
-                                        Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop, 100, 100));
+                                        Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop_pin, 100, 100));
                                     for (TruckStop stop : res.getTruckStops()) {
                                         map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
 
@@ -249,7 +248,7 @@ public class AppController extends Application {
 
 
             if (Util.marker_icon == null)
-                Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop, 100, 100));
+                Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop_pin, 100, 100));
                         LatLngBounds.Builder builder = LatLngBounds.builder();
             for (TruckStop stop : truckStops) {
                 LatLng point = new LatLng(stop.getLat(), stop.getLng());
