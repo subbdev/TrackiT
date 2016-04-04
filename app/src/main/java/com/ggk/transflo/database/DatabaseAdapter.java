@@ -1,4 +1,4 @@
-package com.ggk.trackit.database;
+package com.ggk.transflo.database;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -8,7 +8,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 
-import com.ggk.trackit.beans.TruckStop;
+import com.ggk.transflo.beans.TruckStop;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;

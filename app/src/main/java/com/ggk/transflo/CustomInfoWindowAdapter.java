@@ -1,4 +1,4 @@
-package com.ggk.trackit;
+package com.ggk.transflo;
 
 import android.app.Activity;
 import android.text.Html;

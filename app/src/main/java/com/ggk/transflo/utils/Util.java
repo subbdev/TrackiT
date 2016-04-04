@@ -1,4 +1,4 @@
-package com.ggk.trackit.utils;
+package com.ggk.transflo.utils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -8,7 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.provider.Settings;
 
-import com.ggk.trackit.R;
+import com.ggk.transflo.R;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 

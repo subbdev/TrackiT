@@ -1,4 +1,4 @@
-package com.ggk.trackit.beans;
+package com.ggk.transflo.beans;
 
 public class TruckStop {
     private String name;

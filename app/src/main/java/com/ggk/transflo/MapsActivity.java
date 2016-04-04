@@ -1,4 +1,4 @@
-package com.ggk.trackit;
+package com.ggk.transflo;
 
 import android.Manifest;
 import android.content.Context;
@@ -25,12 +25,12 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.ggk.trackit.database.DatabaseAdapter;
-import com.ggk.trackit.restcontroller.AppController;
-import com.ggk.trackit.utils.Cache;
-import com.ggk.trackit.utils.ConnectivityUtil;
-import com.ggk.trackit.utils.Timer;
-import com.ggk.trackit.utils.Util;
+import com.ggk.transflo.database.DatabaseAdapter;
+import com.ggk.transflo.restcontroller.AppController;
+import com.ggk.transflo.utils.Cache;
+import com.ggk.transflo.utils.ConnectivityUtil;
+import com.ggk.transflo.utils.Timer;
+import com.ggk.transflo.utils.Util;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -44,8 +44,8 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
-import static com.ggk.trackit.utils.Util.getCurrentRadius;
-import static com.ggk.trackit.utils.Util.isManualMove;
+import static com.ggk.transflo.utils.Util.getCurrentRadius;
+import static com.ggk.transflo.utils.Util.isManualMove;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         LocationListener,

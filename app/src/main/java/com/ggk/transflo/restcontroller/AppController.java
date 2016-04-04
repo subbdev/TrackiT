@@ -1,4 +1,4 @@
-package com.ggk.trackit.restcontroller;
+package com.ggk.transflo.restcontroller;
 
 import android.Manifest;
 import android.app.Activity;
@@ -20,12 +20,12 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.ggk.trackit.CustomInfoWindowAdapter;
-import com.ggk.trackit.R;
-import com.ggk.trackit.beans.ResBean;
-import com.ggk.trackit.beans.TruckStop;
-import com.ggk.trackit.utils.Cache;
-import com.ggk.trackit.utils.Util;
+import com.ggk.transflo.CustomInfoWindowAdapter;
+import com.ggk.transflo.R;
+import com.ggk.transflo.beans.ResBean;
+import com.ggk.transflo.beans.TruckStop;
+import com.ggk.transflo.utils.Cache;
+import com.ggk.transflo.utils.Util;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;

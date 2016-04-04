@@ -1,4 +1,4 @@
-package com.ggk.trackit.utils;
+package com.ggk.transflo.utils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -8,7 +8,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-import com.ggk.trackit.R;
+import com.ggk.transflo.R;
 
 
 public class ConnectivityUtil {

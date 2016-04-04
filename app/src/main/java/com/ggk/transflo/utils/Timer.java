@@ -1,8 +1,8 @@
-package com.ggk.trackit.utils;
+package com.ggk.transflo.utils;
 
 import android.os.CountDownTimer;
 
-import com.ggk.trackit.MapsActivity;
+import com.ggk.transflo.MapsActivity;
 
 
 public class Timer {

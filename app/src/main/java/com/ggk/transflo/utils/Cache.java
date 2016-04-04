@@ -1,6 +1,6 @@
-package com.ggk.trackit.utils;
+package com.ggk.transflo.utils;
 
-import com.ggk.trackit.database.DatabaseAdapter;
+import com.ggk.transflo.database.DatabaseAdapter;
 
 
 public class Cache {
