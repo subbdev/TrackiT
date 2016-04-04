@@ -1,12 +1,17 @@
 package com.subbu.trackit;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -22,6 +27,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -32,6 +38,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.subbu.trackit.database.DatabaseAdapter;
@@ -49,6 +56,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
+    public static final int PERMISSION_REQUEST_CODE = 1;
     public static final String TRACK_ME_PREFERENCES = "TrackMe" ;
     public static final String PREFERENCES_IS_SATELLITE_VIEW = "MapSatelliteView" ;
     public static final String PREFERENCES_TRACKING = "Tracking" ;
@@ -61,12 +69,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     SharedPreferences sharedpreferences ;
     boolean isSatelliteView;
 
-    private Button mTrackMeButton, mSatelliteMapButton, mDbServerButton,
-            mCloseButton, mClearButton, mDoneButton, mSearchButton;
-    private ImageButton mCurrentLocationButton;
+    private Button mSatelliteMapButton, mCloseButton, mClearButton, mDoneButton,mDbServerButton, mSearchButton;
+    private ImageButton mCurrentLocationButton,mTrackMeButton;
+    private TextView mTrackMeTextView;
     private EditText mNameEditText, mCityEditText, mStateEditText, mZipEditText;
-    private LinearLayout mSearchLayout, mSettingsLayout;
+    private LinearLayout mSearchLayout;
     private Marker mLastSelectedMarker;
+    private int dpi;
+    private int deviceWidth;
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case PERMISSION_REQUEST_CODE:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.v("TAG", "Success");
+                }else{
+                    Log.v("TAG", "Failed");
+                }
+
+                break;
+        }
+    }
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,10 +111,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        mTrackMeButton = (Button) findViewById(R.id.button_track_me);
+        mTrackMeButton = (ImageButton) findViewById(R.id.button_track_me);
         mSatelliteMapButton = (Button) findViewById(R.id.button_satellite_map_view);
         mCurrentLocationButton = (ImageButton) findViewById(R.id.button_current_location);
         mDbServerButton = (Button) findViewById(R.id.button_db_server);
+
+        mTrackMeTextView = (TextView) findViewById(R.id.text_view_track_me);
 
         mCloseButton = (Button) findViewById(R.id.button_close);
         mClearButton = (Button) findViewById(R.id.button_clear);
@@ -99,7 +129,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mZipEditText = (EditText) findViewById(R.id.edit_text_zip);
 
         mSearchLayout = (LinearLayout) findViewById(R.id.layout_search);
-        mSettingsLayout = (LinearLayout) findViewById(R.id.layout_settings);
 
         mTrackMeButton.setOnClickListener(this);
         mSatelliteMapButton.setOnClickListener(this);
@@ -114,14 +143,46 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Util.isTracking = sharedpreferences.getBoolean(PREFERENCES_TRACKING, false);
         isSatelliteView = sharedpreferences.getBoolean(PREFERENCES_IS_SATELLITE_VIEW, false);
 
+
+        if(isConnectingToInternet(MapsActivity.this)){
+            checkGPSStatus();
+
+        }else{
+            final AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+
+            // Setting Dialog Title
+            alertDialog.setTitle("Track me");
+
+            // Setting Dialog Message
+            alertDialog.setMessage(getString(R.string.network_turn_on));
+
+            alertDialog.setCanceledOnTouchOutside(false);
+
+            // Setting OK Button
+            alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+
+                    alertDialog.dismiss();
+
+                    checkGPSStatus();
+
+                }
+            });
+
+            // Showing Alert Message
+            alertDialog.show();
+        }
+    }
+
+    private void checkGPSStatus() {
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         // getting GPS status
         boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
         // getting network status
-        boolean  isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
-        if(!(isGPSEnabled && isNetworkEnabled)){
+        if (!(isGPSEnabled && isNetworkEnabled)) {
             Util.showSettingsAlert(MapsActivity.this);
         }
     }
@@ -144,55 +205,56 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                if (mSettingsLayout.getVisibility() == View.VISIBLE) {
+                if (mSatelliteMapButton.getVisibility() == View.VISIBLE) {
                     mSearchLayout.setVisibility(View.GONE);
-                    mSettingsLayout.setVisibility(View.GONE);
                     mSearchButton.setVisibility(View.GONE);
+                    mSatelliteMapButton.setVisibility(View.GONE);
+                    mCurrentLocationButton.setVisibility(View.GONE);
                 } else {
-                    mSettingsLayout.setVisibility(View.VISIBLE);
                     mSearchButton.setVisibility(View.VISIBLE);
+                    mSatelliteMapButton.setVisibility(View.VISIBLE);
+                    mCurrentLocationButton.setVisibility(View.VISIBLE);
                 }
             }
         });
 
         if(isSatelliteView){
-            mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+            mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+            mSatelliteMapButton.setBackground(getDrawable(R.drawable.map_view));
+            mSatelliteMapButton.setText(getString(R.string.map));
         }else{
             mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+
+            mSatelliteMapButton.setBackground(getDrawable(R.drawable.satellite_view));
+            mSatelliteMapButton.setText(getString(R.string.satellite));
         }
         if (Util.isTracking) {
             mTimer = new Timer(this);
             mTimer.startTimer();
+            mTrackMeButton.setBackground(getDrawable(R.drawable.tracking));
+            mTrackMeTextView.setText(getString(R.string.tracking));
+        }else{
+            mTrackMeButton.setBackground(getDrawable(R.drawable.track_me));
+            mTrackMeTextView.setText(getString(R.string.track_me));
         }
 
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
-
+        AppController.getInstance().setMap(mMap);
         DisplayMetrics displayMetrics = new DisplayMetrics();
         WindowManager windowmanager = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         windowmanager.getDefaultDisplay().getMetrics(displayMetrics);
-        float deviceWidth = displayMetrics.widthPixels;
+        deviceWidth = displayMetrics.widthPixels;
         float deviceHeight = displayMetrics.heightPixels;
-        Log.i("^^^^^^^^^^^^", displayMetrics.densityDpi + "");
-        double a = displayMetrics.densityDpi * 256.0 / 160;
+        dpi = displayMetrics.densityDpi;
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-        double di = 256.0 * 0.0254 / displayMetrics.densityDpi;
-        Log.i("^^^^^^^^^^^^", di + "");
-        di = 100 * 1609.34 / di;
-        double z = (Math.log10(di) - Math.log10(a)) / Math.log10(2);
-        Log.i("^^^^^^^^^^^^", z + "");
-        dratio = deviceHeight > deviceWidth ? deviceHeight / deviceWidth : deviceWidth / deviceHeight;
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            ActivityCompat.requestPermissions(MapsActivity.this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},PERMISSION_REQUEST_CODE);
+
             return;
         }
-        mMap.setMyLocationEnabled(true);
-        AppController.getInstance().setMap(mMap);
+        mMap.setMyLocationEnabled(false);
+
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         Location test = null;
         for (String provider : locationManager.getAllProviders()) {
@@ -229,7 +291,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 mLastSelectedMarker = null;
                 if (Util.isManualMove) {
-                    int radius = getCurrentRadius(mMap, dratio);
+                    int radius = getCurrentRadius(mMap, deviceWidth,dpi);
                     Log.i("Distance--------------", radius + "");
                     AppController.getInstance().getStopPoints(null, cameraPosition.target.latitude, cameraPosition.target.longitude, radius, MapsActivity.this);
                 } else {
@@ -263,6 +325,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
     }
 
+    @Override
+    public void onUserInteraction() {
+        super.onUserInteraction();
+        if (Util.isTracking && mTimer != null) {
+            mTimer.resetTimer();
+        }
+    }
 
     @Override
     public void onLocationChanged(Location location) {
@@ -282,6 +351,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onProviderDisabled(String provider) {
 
+    }
+
+    public static boolean isConnectingToInternet(Context context){
+        ConnectivityManager connectivity = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivity != null)
+        {
+            NetworkInfo[] info = connectivity.getAllNetworkInfo();
+            if (info != null)
+                for (int i = 0; i < info.length; i++)
+                    if (info[i].getState() == NetworkInfo.State.CONNECTED)
+                    {
+                        return true;
+                    }
+
+        }
+        return false;
     }
 
     private boolean isGooglePlayServicesAvailable() {
@@ -322,31 +407,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.button_track_me:
+                SharedPreferences.Editor editor = sharedpreferences.edit();
                 if (mTimer == null) {
                     Util.isTracking = true;
                     mTimer = new Timer(MapsActivity.this);
                     mTimer.startTimer();
-                    mTrackMeButton.setText("Tracking...");
+                    mTrackMeTextView.setText(getString(R.string.tracking));
+                    mTrackMeButton.setBackground(getDrawable(R.drawable.tracking));
+                    editor.putBoolean(PREFERENCES_TRACKING, true);
                 } else {
                     Util.isTracking = false;
                     mTimer.stopTimer();
                     mTimer = null;
-                    mTrackMeButton.setText("Track Me");
+                    mTrackMeTextView.setText(getString(R.string.track_me));
+                    mTrackMeButton.setBackground(getDrawable(R.drawable.track_me));
+                    editor.putBoolean(PREFERENCES_TRACKING, false);
                 }
+                editor.commit();
                 break;
 
             case R.id.button_current_location:
                 moveToCurrentLocation();
                 break;
             case R.id.button_satellite_map_view:
-                SharedPreferences.Editor editor = sharedpreferences.edit();
-                if (mSatelliteMapButton.getText().equals(getString(R.string.satellite))) {
+                editor = sharedpreferences.edit();
+
+                if (mMap.getMapType() == GoogleMap.MAP_TYPE_NORMAL) {
+                    mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                    mSatelliteMapButton.setBackground(getDrawable(R.drawable.map_view));
                     mSatelliteMapButton.setText(getString(R.string.map));
-                    mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
                     editor.putBoolean(PREFERENCES_IS_SATELLITE_VIEW, true);
                 } else {
-                    mSatelliteMapButton.setText(getString(R.string.satellite));
                     mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                    mSatelliteMapButton.setBackground(getDrawable(R.drawable.satellite_view));
+                    mSatelliteMapButton.setText(getString(R.string.satellite));
                     editor.putBoolean(PREFERENCES_IS_SATELLITE_VIEW, false);
                 }
                 editor.commit();
@@ -409,7 +503,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void hideView(final View view){
         Animation animation = AnimationUtils.loadAnimation(this, R.anim.slide_out);
-        //use this to make it longer:  animation.setDuration(1000);
+
         animation.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {}
@@ -430,7 +524,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void visibleView(final View view){
         Animation animation = AnimationUtils.loadAnimation(this, R.anim.slide_in);
-        //use this to make it longer:  animation.setDuration(1000);
+
         animation.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {}
@@ -447,28 +541,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         view.startAnimation(animation);
     }
 
-    private void startTracking() {
-        //TODO
-    }
-
-    private void stopTracking() {
-        //TODO
-
-    }
 
 
     public void moveToCurrentLocation() {
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         Location test = null;
         for (String provider : locationManager.getAllProviders()) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(MapsActivity.this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},PERMISSION_REQUEST_CODE);
+
                 return;
             }
             test = locationManager.getLastKnownLocation(provider);
@@ -484,32 +567,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             double longitude = location.getLongitude();
             final float bearing = mMap.getCameraPosition().bearing;
             LatLng latLng = new LatLng(latitude, longitude);
-            double val = (Math.log10(40075160) + Math.log10(160) + Math.log10(1080) - Math.log10(2 * 100 * 1609.34) - Math.log10(480) - Math.log10(256)) / Math.log10(2);
+            double val = (Math.log10(40075160) + Math.log10(160) + Math.log10(deviceWidth) - Math.log10(2 * 100 * 1609.34) - Math.log10(dpi) - Math.log10(256)) / Math.log10(2);
             Log.i("Z^^^^^^^^^^^^", val + "");
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
                     .target(latLng)
                     .zoom((float) val)
                     .bearing(bearing)
                     .build()));
-            int radius = getCurrentRadius(mMap, dratio);
+            mMap.addCircle(new CircleOptions()
+                    .center(latLng)
+                    .radius(100 * 1609.34)
+                    .strokeColor(Color.GREEN)
+                    .fillColor(Color.GREEN));
+
+            int radius = getCurrentRadius(mMap, deviceWidth,dpi);
             Log.i("Distance--------------", radius + "");
             AppController.getInstance().getStopPoints(latLng, latitude, longitude, radius, MapsActivity.this);
             isManualMove = false;
-            /*LatLngBounds bounds = boundsWithCenterAndLatLngDistance(latLng, 2 * 100 * 1609.34f, 2 * 100 * 1609.34f);
-            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0)*//*,DURATION_IN_MS_IF_NEEDED*//*,new GoogleMap.CancelableCallback(){
-                @Override
-                public void onCancel() {
-                    //DO SOMETHING HERE IF YOU WANT TO REACT TO A USER TOUCH WHILE ANIMATING
-                }
-                @Override
-                public void onFinish() {
-                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
-                            .target(mMap.getCameraPosition().target)
-                            .zoom(mMap.getCameraPosition().zoom)
-                            .bearing(bearing)
-                    .build()));
-                }
-            });*/
+
         }
     }
 
