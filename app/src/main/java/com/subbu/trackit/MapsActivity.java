@@ -15,9 +15,12 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -59,10 +62,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     SharedPreferences sharedpreferences ;
     boolean isSatelliteView;
 
-    private Button mTrackMeButton, mSatelliteMapButton, mCurrentLocationButton, mDbServerButton,
+    private Button mTrackMeButton, mSatelliteMapButton, mDbServerButton,
             mCloseButton, mClearButton, mDoneButton, mSearchButton;
+    private ImageButton mCurrentLocationButton;
     private EditText mNameEditText, mCityEditText, mStateEditText, mZipEditText;
-    private LinearLayout mSearchLayout;
+    private LinearLayout mSearchLayout, mSettingsLayout;
     private Marker mLastSelectedMarker;
 
     @Override
@@ -82,7 +86,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mTrackMeButton = (Button) findViewById(R.id.button_track_me);
         mSatelliteMapButton = (Button) findViewById(R.id.button_satellite_map_view);
-        mCurrentLocationButton = (Button) findViewById(R.id.button_current_location);
+        mCurrentLocationButton = (ImageButton) findViewById(R.id.button_current_location);
         mDbServerButton = (Button) findViewById(R.id.button_db_server);
 
         mCloseButton = (Button) findViewById(R.id.button_close);
@@ -96,6 +100,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mZipEditText = (EditText) findViewById(R.id.edit_text_zip);
 
         mSearchLayout = (LinearLayout) findViewById(R.id.layout_search);
+        mSettingsLayout = (LinearLayout) findViewById(R.id.layout_settings);
 
         mTrackMeButton.setOnClickListener(this);
         mSatelliteMapButton.setOnClickListener(this);
@@ -136,6 +141,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                if (mSettingsLayout.getVisibility() == View.VISIBLE) {
+                    mSearchLayout.setVisibility(View.GONE);
+                    mSettingsLayout.setVisibility(View.GONE);
+                    mSearchButton.setVisibility(View.GONE);
+                } else {
+                    mSettingsLayout.setVisibility(View.VISIBLE);
+                    mSearchButton.setVisibility(View.VISIBLE);
+                }
+            }
+        });
 
         if(isSatelliteView){
             mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
@@ -196,7 +215,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         AppController.getInstance().getStopPoints(latLng, latitude, longitude, 50000, MapsActivity.this);
                     }
                     Util.fromDB = true;
-                }else{
+                } else {
 
                 }
             }
@@ -219,14 +238,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public boolean onMarkerClick(Marker marker) {
                 if(!TextUtils.isEmpty(marker.getTitle())) {
                     if (mLastSelectedMarker != null)
-                        mLastSelectedMarker.setIcon(BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(MapsActivity.this, R.drawable.truck_stop, 100, 100)));
-                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(MapsActivity.this, R.drawable.selected_stop, 130, 130)));
+                        mLastSelectedMarker.setIcon(BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(MapsActivity.this, R.drawable.truck_stop_pin, 100, 100)));
+                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(MapsActivity.this, R.drawable.selected_stop_pin, 130, 130)));
                     marker.showInfoWindow();
                     mLastSelectedMarker = marker;
                 }
                 return true;
             }
         });
+
+
         if (location != null) {
             onLocationChanged(location);
         }
@@ -336,15 +357,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 break;
 
             case R.id.button_close:
-                mSearchLayout.setVisibility(View.GONE);
+//                mSearchLayout.setVisibility(View.GONE);
+                hideView(mSearchLayout);
+                mSearchButton.setVisibility(View.VISIBLE);
                 break;
 
             case R.id.button_search:
-                if (mSearchLayout.getVisibility() == View.VISIBLE) {
+
+//                mSearchLayout.setVisibility(View.VISIBLE);
+                visibleView(mSearchLayout);
+//                hideView(mSearchButton);
+                mSearchButton.setVisibility(View.GONE);
+                /*if (mSearchLayout.getVisibility() == View.VISIBLE) {
                     mSearchLayout.setVisibility(View.GONE);
                 } else {
-                    mSearchLayout.setVisibility(View.VISIBLE);
-                }
+
+                }*/
                 break;
 
             case R.id.button_clear:
@@ -363,7 +391,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 String state = TextUtils.isEmpty(mStateEditText.getText()) ? "" : mStateEditText.getText().toString().trim();
                 String zip = TextUtils.isEmpty(mZipEditText.getText()) ? "" : mZipEditText.getText().toString().trim();
 
-                mSearchLayout.setVisibility(View.GONE);
+//                mSearchLayout.setVisibility(View.GONE);
+                hideView(mSearchLayout);
+                mSearchButton.setVisibility(View.VISIBLE);
+
 
                 InputMethodManager imm = (InputMethodManager) getApplicationContext().getSystemService(INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(mDoneButton.getWindowToken(), 0);
@@ -374,6 +405,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    private void hideView(final View view){
+        Animation animation = AnimationUtils.loadAnimation(this, R.anim.slide_out);
+        //use this to make it longer:  animation.setDuration(1000);
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {}
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                view.setVisibility(View.GONE);
+            }
+        });
+
+        InputMethodManager imm = (InputMethodManager) getApplicationContext().getSystemService(INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(mDoneButton.getWindowToken(), 0);
+        view.startAnimation(animation);
+    }
+
+    private void visibleView(final View view){
+        Animation animation = AnimationUtils.loadAnimation(this, R.anim.slide_in);
+        //use this to make it longer:  animation.setDuration(1000);
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {}
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                view.setVisibility(View.VISIBLE);
+            }
+        });
+
+        view.startAnimation(animation);
+    }
 
     private void startTracking() {
         //TODO
@@ -451,5 +521,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
+
 
 }

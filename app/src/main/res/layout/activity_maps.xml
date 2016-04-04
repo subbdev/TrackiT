@@ -13,41 +13,50 @@
         android:layout_height="match_parent"
         tools:context="com.subbu.trackit.MapsActivity" />
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/layout_search"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:background="#76383838"
+        android:visibility="gone">
 
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/name"
-            android:id="@+id/edit_text_name" />
+            android:id="@+id/edit_text_name"
+            android:maxLines="1"
+            android:singleLine="true" />
 
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/city"
-            android:id="@+id/edit_text_city" />
+            android:id="@+id/edit_text_city"
+            android:maxLines="1"
+            android:singleLine="true" />
 
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/state"
-            android:id="@+id/edit_text_state" />
+            android:id="@+id/edit_text_state"
+            android:maxLines="1"
+            android:singleLine="true" />
 
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/zip"
-            android:inputType="number"
             android:ems="10"
-            android:id="@+id/edit_text_zip" />
+            android:id="@+id/edit_text_zip"
+            android:maxLines="1"
+            android:singleLine="true" />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -77,8 +86,12 @@
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/layout_settings">
 
         <Button
             android:layout_width="wrap_content"
@@ -93,12 +106,11 @@
             android:id="@+id/button_satellite_map_view"
             android:layout_weight="1"
             android:text="@string/satellite" />
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <ImageButton
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:id="@+id/button_current_location"
-            android:layout_weight="1"
-            android:text="@string/current" />
+            android:background="@drawable/current_location"/>
 
         <Button
             android:layout_width="wrap_content"
@@ -109,12 +121,12 @@
 
     </LinearLayout>
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/button_search"
         android:layout_weight="1"
         android:text="@string/search" />
-    </LinearLayout>
+    </RelativeLayout>
 
 
 </FrameLayout>
