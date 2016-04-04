@@ -26,21 +26,17 @@ public class Util {
         double scale = radius * 1609.34 / 540;
         return Math.round(16 - Math.log(scale) / Math.log(2));
     }
-    public static int getCurrentRadius(GoogleMap mMap, float dratio)
+    public static int getCurrentRadius(GoogleMap mMap, float width,float dpi)
     {
        /* LatLngBounds llBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
         float[] test = new float[3];
         Location.distanceBetween(llBounds.northeast.latitude, llBounds.northeast.longitude, llBounds.southwest.latitude, llBounds.southwest.longitude, test);
         Log.i("DISTinti********", test[0] + "");
         int radius = (int) (((test[0] / Math.sqrt(1 + dratio)) * 0.00062137) / 2);*/
-        double radius = (40075160 * 160.0 * 1080) * 0.000621371 / (Math.pow(2, mMap.getCameraPosition().zoom + 1) * 480.0 * 256);
+        double radius = (40075160 * 160.0 * width) * 0.000621371 / (Math.pow(2, mMap.getCameraPosition().zoom + 1) * dpi * 256);
 
         return (int) radius;
     }
-
-    private static final double ASSUMED_INIT_LATLNG_DIFF = 1.0;
-    private static final float ACCURACY = 0.01f;
-
     public static Bitmap resizeMapIcons(Activity activity, int iconName, int width, int height) {
         Bitmap imageBitmap = BitmapFactory.decodeResource(activity.getResources(), iconName);
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);

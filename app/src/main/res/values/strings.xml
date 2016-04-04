@@ -18,4 +18,5 @@
     <string name="city">City</string>
     <string name="state">State</string>
     <string name="zip">Zip</string>
+    <string name="network_turn_on">Please turn on your network</string>
 </resources>

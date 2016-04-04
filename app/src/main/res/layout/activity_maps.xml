@@ -17,12 +17,34 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingRight="10dp"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/button_search">
+            <ImageButton
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:id="@+id/button_track_me"
+                android:background="@drawable/track_me"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/text_view_track_me"
+                android:layout_marginLeft="5dp"
+                android:text="@string/track_me"/>
+
+        </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/layout_search"
         android:orientation="vertical"
-        android:background="#76383838"
+        android:background="#ffffff"
         android:visibility="gone">
 
         <EditText
@@ -85,47 +107,43 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:id="@+id/layout_settings">
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:id="@+id/button_track_me"
-            android:text="@string/track_me" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/button_satellite_map_view"
-            android:layout_weight="1"
-            android:text="@string/satellite" />
         <ImageButton
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:id="@+id/button_current_location"
-            android:background="@drawable/current_location"/>
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="8dp"
+            android:layout_marginRight="8dp"
+            android:background="@android:drawable/ic_menu_mylocation"/>
 
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:id="@+id/button_satellite_map_view"
+            android:text="@string/satellite"
+            android:textSize="10dp"
+            android:layout_marginLeft="15dp"
+            android:layout_marginBottom="30dp"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/satellite_view"/>
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/button_db_server"
-            android:layout_weight="1"
+            android:visibility="gone"
             android:text="@string/server" />
 
-    </LinearLayout>
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/button_search"
         android:layout_weight="1"
         android:text="@string/search" />
+
+
     </RelativeLayout>
 
 

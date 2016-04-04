@@ -6,6 +6,7 @@ import android.app.Application;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
@@ -22,6 +23,7 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -88,7 +90,7 @@ public class AppController extends Application {
 
 
 
-    public void getStopPoints(final LatLng latLng, double lat, double lng, final int radius,final Activity activity) {
+    public void getStopPoints(final LatLng latLng, final double lat, final double lng, final int radius,final Activity activity) {
 
         try {
             requestBody.put("lat",lat);
@@ -101,15 +103,22 @@ public class AppController extends Application {
         if (Util.fromDB && radius != 50000) {
             ArrayList<TruckStop> lst = Cache.getDatabaseAdapter().getTruckStopsByLocNRad(lat, lng, radius);
             map.clear();
+
             MarkerOptions marker = null;
             if (latLng != null) {
-                marker = new MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.current_location, 100, 100))).position(latLng);
+                marker = new MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.current_location_pin, 100, 100))).position(latLng);
                 map.addMarker(marker);
+
+                map.addCircle(new CircleOptions()
+                        .center(latLng)
+                        .radius(100 * 1609.34)
+                        .strokeColor(Color.GREEN)
+                        .fillColor(Color.GREEN));
             }
             if (lst.size() > 0) {
 
                 if (Util.marker_icon == null)
-                    Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop, 100, 100));
+                    Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop_pin, 100, 100));
                 for (TruckStop stop : lst) {
                     map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
                     marker = new MarkerOptions()
@@ -153,21 +162,27 @@ public class AppController extends Application {
 
                         @Override
                         public void onResponse(JSONObject response) {
-                            Log.i("start #######", curval + "----" + Util.currentCall);
+
                             if (curval == Util.currentCall || radius == 50000) {
                                 ResBean res = gson.fromJson(response.toString(), ResBean.class);
-                                Log.i("&&&&&&&&&&&&&&&&", radius + "--" + res.getTruckStops().size() + "---" + map.getCameraPosition().zoom);
+
                                 map.clear();
                                 MarkerOptions marker = null;
                                 if (latLng != null) {
-                                    marker = new MarkerOptions().position(latLng);
+                                    marker = new MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.current_location_pin, 100, 100))).position(latLng);
                                     map.addMarker(marker);
+
+                                    map.addCircle(new CircleOptions()
+                                            .center(latLng)
+                                            .radius(100 * 1609.34)
+                                            .strokeColor(Color.GREEN)
+                                            .fillColor(Color.GREEN));
                                 }
                                 if (res.getTruckStops().size() > 0) {
 
 
                                     if (Util.marker_icon == null)
-                                        Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop, 100, 100));
+                                        Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop_pin, 100, 100));
                                     for (TruckStop stop : res.getTruckStops()) {
                                         if (radius != 50000) {
                                             map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
@@ -196,6 +211,7 @@ public class AppController extends Application {
                                             marker.snippet(snippet.toString());
                                             map.addMarker(marker);
                                         }
+                                        if(radius==50000)
                                         Cache.getDatabaseAdapter().insertTruckStops(stop);
                                     }
                                 }
@@ -208,7 +224,7 @@ public class AppController extends Application {
 
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    Log.d("ERROR", new String(error.networkResponse.data));
+
                 }
             }) {
                 /**
@@ -255,7 +271,7 @@ public class AppController extends Application {
 
 
             if (Util.marker_icon == null)
-                Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop, 100, 100));
+                Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop_pin, 100, 100));
                         LatLngBounds.Builder builder = LatLngBounds.builder();
             for (TruckStop stop : truckStops) {
                 LatLng point = new LatLng(stop.getLat(), stop.getLng());
