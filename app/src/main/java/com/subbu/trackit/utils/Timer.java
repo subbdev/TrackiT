@@ -1,6 +1,5 @@
 package com.subbu.trackit.utils;
 
-import android.app.Activity;
 import android.os.CountDownTimer;
 import android.util.Log;
 
@@ -10,10 +9,10 @@ import com.subbu.trackit.MapsActivity;
 public class Timer {
 
     private static final String TAG = "Timer";
-    private Activity mContext;
-    long milliSeconds = 900000; // 15 minutes
+    private MapsActivity mContext;
+    long milliSeconds = 15000; // 15 sec
 
-    public Timer(Activity context){
+    public Timer(MapsActivity context) {
         this.mContext = context;
     }
 
@@ -21,19 +20,18 @@ public class Timer {
 
          public void onTick(long millisUntilFinished) {
              //Some code
-             Log.v(TAG, millisUntilFinished+"");
+             Log.v(TAG, millisUntilFinished + "");
          }
 
          public void onFinish() {
              Log.v(TAG, "onFinish");
-             MapsActivity.mTimer = null;
+             mContext.moveToCurrentLocation();
          }
      };
 
      public void resetTimer() {
          timer.cancel();
          timer.start();
-
      }
 
      public void startTimer() {

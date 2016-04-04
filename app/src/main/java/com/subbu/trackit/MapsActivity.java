@@ -33,7 +33,6 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.subbu.trackit.database.DatabaseAdapter;
 import com.subbu.trackit.restcontroller.AppController;
@@ -41,8 +40,8 @@ import com.subbu.trackit.utils.Cache;
 import com.subbu.trackit.utils.Timer;
 import com.subbu.trackit.utils.Util;
 
-import static com.subbu.trackit.utils.Util.boundsWithCenterAndLatLngDistance;
 import static com.subbu.trackit.utils.Util.getCurrentRadius;
+import static com.subbu.trackit.utils.Util.isManualMove;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         LocationListener,
@@ -161,6 +160,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }else{
             mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         }
+        if (Util.isTracking) {
+            mTimer = new Timer(this);
+            mTimer.startTimer();
+        }
 
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
 
@@ -208,11 +211,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (location != null) {
                     double latitude = location.getLatitude();
                     double longitude = location.getLongitude();
-                    LatLng latLng = new LatLng(latitude, longitude);
-                    LatLngBounds bounds = boundsWithCenterAndLatLngDistance(latLng, 2 * 100 * 1609.34f, 2 * 100 * 1609.34f);
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0));
+                    moveToCurrentLocation();
                     if (Cache.getDatabaseAdapter().isTruckStopsEmpty()) {
-                        AppController.getInstance().getStopPoints(latLng, latitude, longitude, 50000, MapsActivity.this);
+                        AppController.getInstance().getStopPoints(null, latitude, longitude, 50000, MapsActivity.this);
                     }
                     Util.fromDB = true;
                 } else {
@@ -223,11 +224,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
             @Override
             public void onCameraChange(CameraPosition cameraPosition) {
+                if (Util.isTracking && mTimer != null) {
+                    mTimer.resetTimer();
+                }
                 mLastSelectedMarker = null;
                 if (Util.isManualMove) {
                     int radius = getCurrentRadius(mMap, dratio);
                     Log.i("Distance--------------", radius + "");
-                    AppController.getInstance().getStopPoints(cameraPosition.target, cameraPosition.target.latitude, cameraPosition.target.longitude, radius, MapsActivity.this);
+                    AppController.getInstance().getStopPoints(null, cameraPosition.target.latitude, cameraPosition.target.longitude, radius, MapsActivity.this);
                 } else {
                     Util.isManualMove = true;
                 }
@@ -262,10 +266,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onLocationChanged(Location location) {
-        double latitude = location.getLatitude();
-        double longitude = location.getLongitude();
-        LatLng latLng = new LatLng(latitude, longitude);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        moveToCurrentLocation();
     }
 
     @Override
@@ -321,15 +322,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.button_track_me:
-
                 if (mTimer == null) {
+                    Util.isTracking = true;
                     mTimer = new Timer(MapsActivity.this);
                     mTimer.startTimer();
-                    startTracking();
+                    mTrackMeButton.setText("Tracking...");
                 } else {
+                    Util.isTracking = false;
                     mTimer.stopTimer();
                     mTimer = null;
-                    stopTracking();
+                    mTrackMeButton.setText("Track Me");
                 }
                 break;
 
@@ -353,7 +355,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             case R.id.button_db_server:
                 //TODO
-
+                Util.fromDB = Util.fromDB ^ true;
                 break;
 
             case R.id.button_close:
@@ -455,7 +457,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    private void moveToCurrentLocation() {
+    public void moveToCurrentLocation() {
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         Location test = null;
         for (String provider : locationManager.getAllProviders()) {
@@ -489,6 +491,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .zoom((float) val)
                     .bearing(bearing)
                     .build()));
+            int radius = getCurrentRadius(mMap, dratio);
+            Log.i("Distance--------------", radius + "");
+            AppController.getInstance().getStopPoints(latLng, latitude, longitude, radius, MapsActivity.this);
+            isManualMove = false;
             /*LatLngBounds bounds = boundsWithCenterAndLatLngDistance(latLng, 2 * 100 * 1609.34f, 2 * 100 * 1609.34f);
             mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0)*//*,DURATION_IN_MS_IF_NEEDED*//*,new GoogleMap.CancelableCallback(){
                 @Override

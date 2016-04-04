@@ -7,7 +7,6 @@ import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
-import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.subbu.trackit.beans.TruckStop;
@@ -137,7 +136,8 @@ public class DatabaseAdapter {
     /**
      * Gets all data from Truck stop table.
      */
-    public ArrayList<TruckStop> getTruckStopsByLocNRad(LatLng center, float radius) {
+    public ArrayList<TruckStop> getTruckStopsByLocNRad(double lat, double lng, float radius) {
+        LatLng center = new LatLng(lat, lng);
 
         ArrayList<TruckStop> truckStops = new ArrayList<>();
         String selection = null;
@@ -172,7 +172,6 @@ public class DatabaseAdapter {
                     truckStop.setRawLine3(cursor.getString(9));
                     float[] test = new float[3];
                     Location.distanceBetween(center.latitude, center.longitude, truckStop.getLat(), truckStop.getLng(), test);
-                    Log.i("RADIUS---", test[0] * 0.00062137 + "---" + radius);
                     if (test[0] * 0.00062137 <= radius)
                         truckStops.add(truckStop);
                 }
