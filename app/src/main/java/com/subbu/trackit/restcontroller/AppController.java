@@ -89,12 +89,11 @@ public class AppController extends Application {
     }
 
 
-
-    public void getStopPoints(final LatLng latLng, final double lat, final double lng, final int radius,final Activity activity) {
+    public void getStopPoints(final LatLng latLng, final double lat, final double lng, final int radius, final Activity activity) {
 
         try {
-            requestBody.put("lat",lat);
-            requestBody.put("lng",lng);
+            requestBody.put("lat", lat);
+            requestBody.put("lng", lng);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -113,7 +112,7 @@ public class AppController extends Application {
                         .center(latLng)
                         .radius(100 * 1609.34)
                         .strokeColor(Color.GREEN)
-                        .fillColor(Color.GREEN));
+                        .fillColor(0x1500ff00));
             }
             if (lst.size() > 0) {
 
@@ -130,18 +129,18 @@ public class AppController extends Application {
                     Location.distanceBetween(lat, lng, stop.getLat(), stop.getLng(), distance);
 
                     StringBuilder snippet = new StringBuilder();
-                    snippet.append("<html><body> Distance : " + distance[0]* 0.000621371 +" miles" +
+                    snippet.append("<html><body> Distance : " + distance[0] * 0.000621371 + " miles" +
                             "<br/>City : " + stop.getCity() +
                             "<br/>State : " + stop.getState() +
                             "<br/>Country : " + stop.getCountry() +
                             "<br/> Zip : " + stop.getZip());
-                    if(!TextUtils.isEmpty(stop.getRawLine1())){
+                    if (!TextUtils.isEmpty(stop.getRawLine1())) {
                         snippet.append("<br/> RawLine1 : " + stop.getRawLine1());
                     }
-                    if(!TextUtils.isEmpty(stop.getRawLine2())){
+                    if (!TextUtils.isEmpty(stop.getRawLine2())) {
                         snippet.append("<br/> RawLine2 : " + stop.getRawLine2());
                     }
-                    if(!TextUtils.isEmpty(stop.getRawLine3())){
+                    if (!TextUtils.isEmpty(stop.getRawLine3())) {
                         snippet.append("<br/> RawLine3 : " + stop.getRawLine3());
                     }
                     snippet.append("</body></html>");
@@ -176,7 +175,7 @@ public class AppController extends Application {
                                             .center(latLng)
                                             .radius(100 * 1609.34)
                                             .strokeColor(Color.GREEN)
-                                            .fillColor(Color.GREEN));
+                                            .fillColor(0x1500ff00));
                                 }
                                 if (res.getTruckStops().size() > 0) {
 
@@ -211,8 +210,8 @@ public class AppController extends Application {
                                             marker.snippet(snippet.toString());
                                             map.addMarker(marker);
                                         }
-                                        if(radius==50000)
-                                        Cache.getDatabaseAdapter().insertTruckStops(stop);
+                                        if (radius == 50000)
+                                            Cache.getDatabaseAdapter().insertTruckStops(stop);
                                     }
                                 }
                             }
@@ -272,7 +271,7 @@ public class AppController extends Application {
 
             if (Util.marker_icon == null)
                 Util.marker_icon = BitmapDescriptorFactory.fromBitmap(Util.resizeMapIcons(activity, R.drawable.truck_stop_pin, 100, 100));
-                        LatLngBounds.Builder builder = LatLngBounds.builder();
+            LatLngBounds.Builder builder = LatLngBounds.builder();
             for (TruckStop stop : truckStops) {
                 LatLng point = new LatLng(stop.getLat(), stop.getLng());
                 map.setInfoWindowAdapter(new CustomInfoWindowAdapter(activity, stop));
@@ -283,27 +282,27 @@ public class AppController extends Application {
 
                 marker.title(stop.getName());
 
-               float distance = 0;
+                float distance = 0;
 
-                if(location != null) {
+                if (location != null) {
                     float[] distanceArray = new float[1];
                     Location.distanceBetween(location.getLatitude(), location.getLongitude(), stop.getLat(), stop.getLng(), distanceArray);
                     distance = distanceArray[0];
                 }
 
                 StringBuilder snippet = new StringBuilder();
-                snippet.append("<html><body> Distance : " + distance * 0.000621371 +" miles" +
+                snippet.append("<html><body> Distance : " + distance * 0.000621371 + " miles" +
                         "<br/>City : " + stop.getCity() +
                         "<br/>State : " + stop.getState() +
                         "<br/>Country : " + stop.getCountry() +
                         "<br/> Zip : " + stop.getZip());
-                if(!TextUtils.isEmpty(stop.getRawLine1())){
+                if (!TextUtils.isEmpty(stop.getRawLine1())) {
                     snippet.append("<br/> RawLine1 : " + stop.getRawLine1());
                 }
-                if(!TextUtils.isEmpty(stop.getRawLine2())){
+                if (!TextUtils.isEmpty(stop.getRawLine2())) {
                     snippet.append("<br/> RawLine2 : " + stop.getRawLine2());
                 }
-                if(!TextUtils.isEmpty(stop.getRawLine3())){
+                if (!TextUtils.isEmpty(stop.getRawLine3())) {
                     snippet.append("<br/> RawLine3 : " + stop.getRawLine3());
                 }
                 snippet.append("</body></html>");

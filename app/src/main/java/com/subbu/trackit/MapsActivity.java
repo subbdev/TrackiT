@@ -1,17 +1,14 @@
 package com.subbu.trackit;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.AnimationDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -44,6 +41,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.subbu.trackit.database.DatabaseAdapter;
 import com.subbu.trackit.restcontroller.AppController;
 import com.subbu.trackit.utils.Cache;
+import com.subbu.trackit.utils.ConnectivityUtil;
 import com.subbu.trackit.utils.Timer;
 import com.subbu.trackit.utils.Util;
 
@@ -60,16 +58,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static final String TRACK_ME_PREFERENCES = "TrackMe" ;
     public static final String PREFERENCES_IS_SATELLITE_VIEW = "MapSatelliteView" ;
     public static final String PREFERENCES_TRACKING = "Tracking" ;
-    private static DatabaseAdapter databaseAdapter = null;
     private GoogleMap mMap;
     public static Timer mTimer;
-    float dratio;
-    GoogleApiClient mGoogleApiClient;
+    AnimationDrawable animation;
 
     SharedPreferences sharedpreferences ;
     boolean isSatelliteView;
 
-    private Button mSatelliteMapButton, mCloseButton, mClearButton, mDoneButton,mDbServerButton, mSearchButton;
+    private Button mSatelliteMapButton, mCloseButton, mClearButton, mDoneButton, mSearchButton;
     private ImageButton mCurrentLocationButton,mTrackMeButton;
     private TextView mTrackMeTextView;
     private EditText mNameEditText, mCityEditText, mStateEditText, mZipEditText;
@@ -81,7 +77,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
         switch (requestCode) {
             case PERMISSION_REQUEST_CODE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -89,7 +84,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }else{
                     Log.v("TAG", "Failed");
                 }
-
                 break;
         }
     }
@@ -103,7 +97,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             finish();
         }
         setContentView(R.layout.activity_maps);
+
+        //open Databse Connection
         openDatabase();
+
+        //initialize shared preferences
         sharedpreferences = getSharedPreferences(TRACK_ME_PREFERENCES, Context.MODE_PRIVATE);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -111,81 +109,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+
+        //initialize activity elements
         mTrackMeButton = (ImageButton) findViewById(R.id.button_track_me);
         mSatelliteMapButton = (Button) findViewById(R.id.button_satellite_map_view);
         mCurrentLocationButton = (ImageButton) findViewById(R.id.button_current_location);
-        mDbServerButton = (Button) findViewById(R.id.button_db_server);
-
         mTrackMeTextView = (TextView) findViewById(R.id.text_view_track_me);
-
         mCloseButton = (Button) findViewById(R.id.button_close);
         mClearButton = (Button) findViewById(R.id.button_clear);
         mDoneButton = (Button) findViewById(R.id.button_done);
         mSearchButton = (Button) findViewById(R.id.button_search);
-
         mNameEditText = (EditText) findViewById(R.id.edit_text_name);
         mCityEditText = (EditText) findViewById(R.id.edit_text_city);
         mStateEditText = (EditText) findViewById(R.id.edit_text_state);
         mZipEditText = (EditText) findViewById(R.id.edit_text_zip);
-
         mSearchLayout = (LinearLayout) findViewById(R.id.layout_search);
 
+
+        //setting listners to elements
         mTrackMeButton.setOnClickListener(this);
         mSatelliteMapButton.setOnClickListener(this);
         mCurrentLocationButton.setOnClickListener(this);
-        mDbServerButton.setOnClickListener(this);
-
         mClearButton.setOnClickListener(this);
         mCloseButton.setOnClickListener(this);
         mDoneButton.setOnClickListener(this);
-
         mSearchButton.setOnClickListener(this);
+        findViewById(R.id.layout_track_me).setOnClickListener(this);
+
+        //get persisted status of tracking and maptype
         Util.isTracking = sharedpreferences.getBoolean(PREFERENCES_TRACKING, false);
         isSatelliteView = sharedpreferences.getBoolean(PREFERENCES_IS_SATELLITE_VIEW, false);
 
 
-        if(isConnectingToInternet(MapsActivity.this)){
-            checkGPSStatus();
-
-        }else{
-            final AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-
-            // Setting Dialog Title
-            alertDialog.setTitle("Track me");
-
-            // Setting Dialog Message
-            alertDialog.setMessage(getString(R.string.network_turn_on));
-
-            alertDialog.setCanceledOnTouchOutside(false);
-
-            // Setting OK Button
-            alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-
-                    alertDialog.dismiss();
-
-                    checkGPSStatus();
-
-                }
-            });
-
-            // Showing Alert Message
-            alertDialog.show();
-        }
+        ConnectivityUtil.check(MapsActivity.this);
     }
 
-    private void checkGPSStatus() {
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        // getting GPS status
-        boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
-        // getting network status
-        boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-
-        if (!(isGPSEnabled && isNetworkEnabled)) {
-            Util.showSettingsAlert(MapsActivity.this);
-        }
-    }
 
 
     /**
@@ -200,8 +159,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
-        mMap = googleMap;
 
+        mMap = googleMap;
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
@@ -231,11 +190,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (Util.isTracking) {
             mTimer = new Timer(this);
             mTimer.startTimer();
-            mTrackMeButton.setBackground(getDrawable(R.drawable.tracking));
+            if (animation == null) {
+                animation = new AnimationDrawable();
+                animation.addFrame(getResources().getDrawable(R.drawable.track_blink), 300);
+                animation.addFrame(getResources().getDrawable(R.drawable.tracking), 500);
+                animation.setOneShot(false);
+            }
+            mTrackMeButton.setBackground(animation);
+            animation.start();
             mTrackMeTextView.setText(getString(R.string.tracking));
         }else{
             mTrackMeButton.setBackground(getDrawable(R.drawable.track_me));
             mTrackMeTextView.setText(getString(R.string.track_me));
+            if (animation != null)
+                animation.stop();
         }
 
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
@@ -353,21 +321,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    public static boolean isConnectingToInternet(Context context){
-        ConnectivityManager connectivity = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (connectivity != null)
-        {
-            NetworkInfo[] info = connectivity.getAllNetworkInfo();
-            if (info != null)
-                for (int i = 0; i < info.length; i++)
-                    if (info[i].getState() == NetworkInfo.State.CONNECTED)
-                    {
-                        return true;
-                    }
 
-        }
-        return false;
-    }
 
     private boolean isGooglePlayServicesAvailable() {
         int status = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getApplicationContext());
@@ -406,31 +360,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.button_track_me:
-                SharedPreferences.Editor editor = sharedpreferences.edit();
-                if (mTimer == null) {
-                    Util.isTracking = true;
-                    mTimer = new Timer(MapsActivity.this);
-                    mTimer.startTimer();
-                    mTrackMeTextView.setText(getString(R.string.tracking));
-                    mTrackMeButton.setBackground(getDrawable(R.drawable.tracking));
-                    editor.putBoolean(PREFERENCES_TRACKING, true);
-                } else {
-                    Util.isTracking = false;
-                    mTimer.stopTimer();
-                    mTimer = null;
-                    mTrackMeTextView.setText(getString(R.string.track_me));
-                    mTrackMeButton.setBackground(getDrawable(R.drawable.track_me));
-                    editor.putBoolean(PREFERENCES_TRACKING, false);
-                }
-                editor.commit();
+            case R.id.layout_track_me:
+                updateTrackMeStatus();
                 break;
-
+            case R.id.button_track_me:
+                updateTrackMeStatus();
+                break;
             case R.id.button_current_location:
                 moveToCurrentLocation();
                 break;
             case R.id.button_satellite_map_view:
-                editor = sharedpreferences.edit();
+                SharedPreferences.Editor editor = sharedpreferences.edit();
 
                 if (mMap.getMapType() == GoogleMap.MAP_TYPE_NORMAL) {
                     mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
@@ -447,10 +387,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 break;
 
-            case R.id.button_db_server:
-                //TODO
-                Util.fromDB = Util.fromDB ^ true;
-                break;
+
 
             case R.id.button_close:
 //                mSearchLayout.setVisibility(View.GONE);
@@ -478,6 +415,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mStateEditText.setText("");
                 mZipEditText.setText("");
                 mNameEditText.requestFocus();
+                mSearchButton.setText(getString(R.string.search));
 
                 break;
 
@@ -488,6 +426,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 String zip = TextUtils.isEmpty(mZipEditText.getText()) ? "" : mZipEditText.getText().toString().trim();
 
 //                mSearchLayout.setVisibility(View.GONE);
+                StringBuilder searchText = new StringBuilder();
+                if (name.length() > 0) {
+                    searchText.append(name + ",");
+                }
+                if (city.length() > 0) {
+                    searchText.append(city + ",");
+                }
+                if (state.length() > 0) {
+                    searchText.append(state + ",");
+                }
+                if (zip.length() > 0) {
+                    searchText.append(zip + ",");
+                }
+
+                mSearchButton.setText(TextUtils.isEmpty(searchText) ? getString(R.string.search) : searchText.deleteCharAt(searchText.length() - 1));
+
                 hideView(mSearchLayout);
                 mSearchButton.setVisibility(View.VISIBLE);
 
@@ -499,6 +453,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 break;
         }
+    }
+
+    private void updateTrackMeStatus() {
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        if (mTimer == null) {
+            Util.isTracking = true;
+            mTimer = new Timer(MapsActivity.this);
+            mTimer.startTimer();
+            mTrackMeTextView.setText(getString(R.string.tracking));
+            if (animation == null) {
+                animation = new AnimationDrawable();
+                animation.addFrame(getResources().getDrawable(R.drawable.track_blink), 300);
+                animation.addFrame(getResources().getDrawable(R.drawable.tracking), 500);
+                animation.setOneShot(false);
+            }
+            mTrackMeButton.setBackground(animation);
+            animation.start();
+            editor.putBoolean(PREFERENCES_TRACKING, true);
+        } else {
+            Util.isTracking = false;
+            mTimer.stopTimer();
+            mTimer = null;
+            mTrackMeTextView.setText(getString(R.string.track_me));
+            mTrackMeButton.setBackground(getDrawable(R.drawable.track_me));
+            editor.putBoolean(PREFERENCES_TRACKING, false);
+            if (animation != null)
+                animation.stop();
+        }
+        editor.commit();
     }
 
     private void hideView(final View view){
@@ -578,7 +561,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .center(latLng)
                     .radius(100 * 1609.34)
                     .strokeColor(Color.GREEN)
-                    .fillColor(Color.GREEN));
+                    .fillColor(0x1500ff00));
 
             int radius = getCurrentRadius(mMap, deviceWidth,dpi);
             Log.i("Distance--------------", radius + "");

@@ -19,10 +19,11 @@
         android:orientation="vertical">
 
         <LinearLayout
+            android:id="@+id/layout_track_me"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:paddingRight="10dp"
+            android:padding="10dp"
             android:layout_alignParentRight="true"
             android:layout_below="@+id/button_search">
             <ImageButton
@@ -43,6 +44,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/layout_search"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
         android:orientation="vertical"
         android:background="#ffffff"
         android:visibility="gone">
@@ -87,6 +90,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:textAllCaps="false"
                 android:id="@+id/button_close"
                 android:text="@string/close" />
 
@@ -94,12 +98,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/button_clear"
+                android:textAllCaps="false"
                 android:layout_weight="1"
                 android:text="@string/clear" />
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/button_done"
+                android:textAllCaps="false"
                 android:layout_weight="1"
                 android:text="@string/done" />
         </LinearLayout>
@@ -129,18 +135,20 @@
             android:layout_marginBottom="30dp"
             android:layout_alignParentBottom="true"
             android:background="@drawable/satellite_view"/>
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/button_db_server"
-            android:visibility="gone"
-            android:text="@string/server" />
+
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/button_search"
+        android:textColor="#B1BCBE"
+        android:layout_margin="10dp"
+        android:gravity="left|center_vertical"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:background="@drawable/curve_gray_border_white_bg"
         android:layout_weight="1"
+        android:textAllCaps="false"
         android:text="@string/search" />
 
 
