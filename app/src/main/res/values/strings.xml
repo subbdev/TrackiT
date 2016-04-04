@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Transflo</string>
-    <string name="title_activity_maps">Map</string>
     <string name="track_me">Track me</string>
     <string name="tracking">Tracking...</string>
     <string name="satellite">Satellite</string>
